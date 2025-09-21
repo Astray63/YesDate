@@ -21,7 +21,6 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [invitationCode, setInvitationCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleAuth = async () => {
@@ -38,33 +37,24 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
     setLoading(true);
     try {
       if (isLogin) {
+        // Connexion avec le vrai service Supabase
         await authService.signIn(email, password);
-        navigation.navigate('Quiz');
+        Alert.alert('Succès', 'Connecté avec succès!');
       } else {
+        // Inscription avec le vrai service Supabase
         const { user } = await authService.signUp(email, password, fullName);
         if (user) {
-          // If invitation code provided, join partner
-          if (invitationCode) {
-            await authService.joinPartner(invitationCode, user.id);
-            Alert.alert('Succès', 'Vous êtes maintenant connecté à votre partenaire!');
-          }
-          navigation.navigate('Quiz');
+          Alert.alert('Succès', 'Compte créé avec succès! Vérifiez votre email.');
         }
       }
+      
+      // Navigation vers les rooms après authentification
+      navigation.navigate('RoomScreen');
     } catch (error: any) {
       Alert.alert('Erreur', error.message || 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateAndShowInvitationCode = () => {
-    const code = authService.generateInvitationCode();
-    Alert.alert(
-      'Code d\'invitation',
-      `Votre code d'invitation: ${code}\n\nPartagez ce code avec votre partenaire pour qu'il puisse vous rejoindre.`,
-      [{ text: 'OK' }]
-    );
   };
 
   return (
@@ -74,16 +64,26 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
         style={styles.keyboardView}
       >
         <View style={styles.content}>
+          {/* Back button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>
-              {isLogin ? 'Connexion' : 'Inscription'}
-            </Text>
-            <Text style={styles.subtitle}>
-              {isLogin
-                ? 'Reconnectez-vous pour continuer'
-                : 'Créez votre compte pour commencer'}
-            </Text>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.title}>
+                {isLogin ? 'Connexion' : 'Inscription'}
+              </Text>
+              <Text style={styles.subtitle}>
+                {isLogin
+                  ? 'Connectez-vous pour créer votre room à deux'
+                  : 'Créez votre compte pour commencer'}
+              </Text>
+            </View>
           </View>
 
           {/* Form */}
@@ -123,22 +123,6 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
                 secureTextEntry
               />
             </View>
-
-            {!isLogin && (
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Code d'invitation (optionnel)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={invitationCode}
-                  onChangeText={setInvitationCode}
-                  placeholder="Code de votre partenaire"
-                  autoCapitalize="characters"
-                />
-                <Text style={styles.helpText}>
-                  Entrez le code de votre partenaire pour vous connecter
-                </Text>
-              </View>
-            )}
           </View>
 
           {/* Actions */}
@@ -167,26 +151,7 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
                   : 'Déjà un compte ? Se connecter'}
               </Text>
             </TouchableOpacity>
-
-            {!isLogin && (
-              <TouchableOpacity
-                style={styles.codeButton}
-                onPress={generateAndShowInvitationCode}
-              >
-                <Text style={styles.codeButtonText}>
-                  Générer un code d'invitation
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
-
-          {/* Skip for demo */}
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => navigation.navigate('Quiz')}
-          >
-            <Text style={styles.skipButtonText}>Continuer sans compte (démo)</Text>
-          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -209,6 +174,29 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: theme.spacing.xl,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: theme.spacing.md,
+    top: theme.spacing.md,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary + '1A',
+    borderRadius: 20,
+    zIndex: 1,
+  },
+  backIcon: {
+    fontSize: 20,
+    color: theme.colors.primary,
+  },
+  headerTextContainer: {
+    alignItems: 'center',
+    flex: 1,
   },
   title: {
     fontSize: theme.fonts.sizes['3xl'],
@@ -296,5 +284,60 @@ const styles = StyleSheet.create({
     color: theme.colors.mutedLight,
     fontSize: theme.fonts.sizes.xs,
     fontStyle: 'italic',
+  },
+  sectionContainer: {
+    marginBottom: theme.spacing.xl,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.cardLight,
+    borderRadius: theme.borderRadius.lg,
+    ...theme.shadows.sm,
+  },
+  sectionTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: '700' as any,
+    color: theme.colors.textLight,
+    marginBottom: theme.spacing.md,
+    textAlign: 'center',
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: theme.spacing.lg,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.borderLight,
+  },
+  separatorText: {
+    marginHorizontal: theme.spacing.md,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '500' as any,
+    color: theme.colors.mutedLight,
+  },
+  roomOptionContainer: {
+    marginTop: theme.spacing.xl,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+  },
+  roomOptionText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.textLight,
+    marginBottom: theme.spacing.md,
+    textAlign: 'center',
+  },
+  roomButton: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.full,
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary + '10',
+  },
+  roomButtonText: {
+    color: theme.colors.primary,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: '700' as any,
   },
 });

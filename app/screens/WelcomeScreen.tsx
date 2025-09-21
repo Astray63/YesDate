@@ -32,12 +32,12 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
           </View>
 
           <View style={styles.textContainer}>
-            <Text style={styles.mainTitle}>
-              Tired of "I don't know, what do you want to do?"
-            </Text>
-            <Text style={styles.subtitle}>
-              Discover personalized date ideas and plan unforgettable moments together.
-            </Text>
+          <Text style={styles.mainTitle}>
+            Fatigué de "Je ne sais pas, qu'est-ce que tu veux faire ?"
+          </Text>
+          <Text style={styles.subtitle}>
+            Découvrez des idées de rendez-vous personnalisées et planifiez des moments inoubliables ensemble.
+          </Text>
           </View>
         </View>
 
@@ -48,7 +48,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
             onPress={() => navigation.navigate('Auth')}
             activeOpacity={0.9}
           >
-            <Text style={styles.buttonText}>Start the Quiz</Text>
+            <Text style={styles.buttonText}>Trouve ta sortie</Text>
           </TouchableOpacity>
         </View>
       </View>

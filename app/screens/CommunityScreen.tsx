@@ -21,20 +21,20 @@ export default function CommunityScreen({ navigation }: CommunityScreenProps) {
   const mostLovedDates = [
     {
       id: '1',
-      title: 'Picnic in the park',
-      subtitle: 'Enjoy a relaxing afternoon',
+      title: 'Pique-nique dans le parc',
+      subtitle: 'Profitez d\'un après-midi détendu',
       image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC4VF-rzhdp9j_rDkbtFdTFvqBu9tZhvqu-RdDOZGncvd4DcufcS3uQ_KFGKw_WeZptj-dhuSNDMVLmh48mSPHEfoB8RR1DaOgT421bhxBScsiRqLmOGd9-MTehnYMW0fdni7A1tfjP6eyVseyM8HOe0yK37yv_aDIGMmXiW8SkMWIzEujhK6u5CZwyXuw_afkxOTU8zU5u_NZTWtVHTb-XXkTMVQW4JUFpUZkXHKIssVyiLg2-3lFXm-ktLh0QI3q5LzqjPGDH-ms',
     },
     {
       id: '2',
-      title: 'Beach bonfire',
-      subtitle: 'Cozy up by the fire',
+      title: 'Feu de camp sur la plage',
+      subtitle: 'Blottissez-vous près du feu',
       image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCTK7IJVYxCzedNDTvyw12CmvXyX0Ntgj_dJIfJJygK2ilB-j6PKtv437QPsejKD1ecxgkzTIN5DDnlKfWRjX92xcDNIyY-s_01irCGDZOqHTrzVqfqnmlELveVxG02GUqAyJ9Eaafw4Lm2JuTcLI608xoziISqLvfqepQZxwatGi6He9XSdhMeRZVIEMnhcZ3FVLBRDfYx32ftr0Oo9-AKLdO4iL7GtLOSRpHYCYdeAyt_2tj_1Z8mrcQBKoLQ9zRQisHmZMqD7I8',
     },
     {
       id: '3',
-      title: 'Concert night',
-      subtitle: 'Rock out to your favorite band',
+      title: 'Soirée concert',
+      subtitle: 'Dansez au rythme de votre groupe préféré',
       image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDUa47pOj8XcAo2LO7GrmjMHJUf7uk0Ivq93GeGBytAgLM3_lJFucrNLMAA9yCRGdon6qrL4-ol6K91aGdlzp2kaREffppKyCZMAvov1StkUQLYKWKSsARF883U-rvgIdRQbhxJ10cgPds5vUTZwFzXltfPQufTcowJRGkjhO24AiHvBJP3L-xA3UIYmHpK_ENVqyfVmEi3k7S1SKPmjuTd85Wpb2oAN5athfp2ZyVpR2_K-YCVhdn2hDYkoOVSMjNqoclWacgmx_A',
     },
   ];
@@ -42,20 +42,20 @@ export default function CommunityScreen({ navigation }: CommunityScreenProps) {
   const trendingDates = [
     {
       id: '4',
-      title: 'Cooking class',
-      subtitle: 'Learn to make a new dish',
+      title: 'Cours de cuisine',
+      subtitle: 'Apprenez à préparer un nouveau plat',
       image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAT1TXkDZkOyYPWSq3zBut5M3q1KLuODK9fGmgbYwydSAWoua53pDEMJ2o_R2_TJs08P7N_QYH3XiKlD_mOaZ2iY0-ddqtLab4SyKLKnS-jdXQPK9ambuY-gsWv6ZZD07c991r78udSqI700HJWL4Pwsxjuvcgs-W7qi3R1McemGRaZwLSWkwwHq97SCzs-xZOEQA5tYInZDvFesETeCM1LsDarug4UEdE-1nTUnD2Q_8xAUY_xIJfbYQVfKdsNBxZzsVmFwZqPq9A',
     },
     {
       id: '5',
-      title: 'Game night',
-      subtitle: 'Play board games together',
+      title: 'Soirée jeux',
+      subtitle: 'Jouez à des jeux de société ensemble',
       image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAcuPkR0MC-HW1_Sr3SDZzM3Rxvts5bk3g6CROFZ_QpvY1CKGnSyV8mjeTzn95mA2IH93yHEVTaA-Xax-zm4GRse1NFR5z3c64ciI6dnmk2WSgrkYIMNQkxNqMjPsENFR5a7oHAmaNICzilFbR2r6zL0D6Y_X1vXlPTeX04Rg6OOrFrWvRomYkkgYIPNHSutps2zoEwqv39uC_CoXsQgaX5AZi-d_U2bvqYG2JyJPBDlSGt8ETSJrwwWnviCf_mttUWxLrIvoxWD3M',
     },
     {
       id: '6',
-      title: 'Art gallery visit',
-      subtitle: 'Explore creative masterpieces',
+      title: 'Visite de galerie d\'art',
+      subtitle: 'Explorez des chefs-d\'œuvre créatifs',
       image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC4VF-rzhdp9j_rDkbtFdTFvqBu9tZhvqu-RdDOZGncvd4DcufcS3uQ_KFGKw_WeZptj-dhuSNDMVLmh48mSPHEfoB8RR1DaOgT421bhxBScsiRqLmOGd9-MTehnYMW0fdni7A1tfjP6eyVseyM8HOe0yK37yv_aDIGMmXiW8SkMWIzEujhK6u5CZwyXuw_afkxOTU8zU5u_NZTWtVHTb-XXkTMVQW4JUFpUZkXHKIssVyiLg2-3lFXm-ktLh0QI3q5LzqjPGDH-ms',
     },
   ];
@@ -91,7 +91,7 @@ export default function CommunityScreen({ navigation }: CommunityScreenProps) {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Most Loved Dates Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Most loved dates</Text>
+          <Text style={styles.sectionTitle}>Rendez-vous préférés</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -103,7 +103,7 @@ export default function CommunityScreen({ navigation }: CommunityScreenProps) {
 
         {/* Trending Dates Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Trending dates</Text>
+          <Text style={styles.sectionTitle}>Rendez-vous tendances</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -115,35 +115,35 @@ export default function CommunityScreen({ navigation }: CommunityScreenProps) {
 
         {/* Community Stats */}
         <View style={styles.statsSection}>
-          <Text style={styles.statsTitle}>Community Highlights</Text>
+          <Text style={styles.statsTitle}>Points forts de la communauté</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>1,247</Text>
-              <Text style={styles.statLabel}>Dates Completed</Text>
+              <Text style={styles.statLabel}>Rendez-vous terminés</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>89%</Text>
-              <Text style={styles.statLabel}>Success Rate</Text>
+              <Text style={styles.statLabel}>Taux de réussite</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>156</Text>
-              <Text style={styles.statLabel}>Active Couples</Text>
+              <Text style={styles.statLabel}>Couples actifs</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>4.8★</Text>
-              <Text style={styles.statLabel}>Average Rating</Text>
+              <Text style={styles.statLabel}>Note moyenne</Text>
             </View>
           </View>
         </View>
 
         {/* Submit Your Date */}
         <View style={styles.submitSection}>
-          <Text style={styles.submitTitle}>Share Your Date Idea</Text>
+          <Text style={styles.submitTitle}>Partagez votre idée de rendez-vous</Text>
           <Text style={styles.submitDescription}>
-            Help other couples by sharing your amazing date experiences!
+            Aidez d'autres couples en partageant vos expériences de rendez-vous incroyables !
           </Text>
           <TouchableOpacity style={styles.submitButton}>
-            <Text style={styles.submitButtonText}>Submit Date Idea</Text>
+            <Text style={styles.submitButtonText}>Soumettre une idée de rendez-vous</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

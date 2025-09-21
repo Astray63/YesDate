@@ -2,11 +2,12 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Home, Heart, Lightbulb, Trophy, Search } from 'lucide-react-native';
 
 // Screens
 import WelcomeScreen from '../screens/WelcomeScreen';
 import AuthScreen from '../screens/AuthScreen';
+import RoomScreen from '../screens/RoomScreen';
 import QuizScreen from '../screens/QuizScreen';
 import SwipeDateScreen from '../screens/SwipeDateScreen';
 import MatchScreen from '../screens/MatchScreen';
@@ -29,13 +30,26 @@ function MainTabNavigator() {
           borderTopWidth: 1,
           paddingBottom: 4,
           paddingTop: 4,
-          height: 60,
+          height: 56,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+          marginBottom: 30,
         },
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.mutedLight,
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
+          fontSize: 10,
+          fontWeight: '600',
+          marginTop: 2,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 2,
         },
       }}
     >
@@ -44,8 +58,12 @@ function MainTabNavigator() {
         component={WelcomeScreen}
         options={{
           tabBarLabel: 'Accueil',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="home" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Home 
+              size={focused ? 22 : 18} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -54,8 +72,12 @@ function MainTabNavigator() {
         component={SwipeDateScreen}
         options={{
           tabBarLabel: 'Dates',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="local-fire-department" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Search 
+              size={focused ? 22 : 18} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -64,8 +86,12 @@ function MainTabNavigator() {
         component={MatchScreen}
         options={{
           tabBarLabel: 'Matchs',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="favorite" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Heart 
+              size={focused ? 22 : 18} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -74,8 +100,12 @@ function MainTabNavigator() {
         component={CommunityScreen}
         options={{
           tabBarLabel: 'Inspiration',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="explore" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Lightbulb 
+              size={focused ? 22 : 18} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -84,8 +114,12 @@ function MainTabNavigator() {
         component={GamificationScreen}
         options={{
           tabBarLabel: 'Profil',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="person" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Trophy 
+              size={focused ? 22 : 18} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -104,6 +138,7 @@ export default function AppNavigator() {
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Auth" component={AuthScreen} />
+        <Stack.Screen name="RoomScreen" component={RoomScreen} />
         <Stack.Screen name="Quiz" component={QuizScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
         <Stack.Screen 

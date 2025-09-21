@@ -16,20 +16,20 @@ interface GamificationScreenProps extends NavigationProps {}
 
 export default function GamificationScreen({ navigation }: GamificationScreenProps) {
   const userLevel = 'Couple 80% foodie 🍣';
-  const userDescription = "You're a match made in culinary heaven! Keep exploring new tastes together.";
+  const userDescription = "Vous êtes une paire née au paradis culinaire ! Continuez à explorer de nouvelles saveurs ensemble.";
 
   const challenges = [
     {
       id: '1',
-      title: 'Plan a surprise date',
-      description: 'Romantic Rendezvous',
+      title: 'Organiser un rendez-vous surprise',
+      description: 'Rendez-vous romantique',
       image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAwM5qI5FLlitbNKN4X6vB2qEhzLJ5cYHC5hjW8qtREH-5sDtmOvZ2rqAZ5avdBbuUU00u5dnMmsOXcQrlbjh8Isv4S95R9I3tD-DUle8DtzkoeOaHXDoAcopq_wubLPY9hfbVkk1SvLWkEqkrIhPkOY3c-slWtT9UTCLINDCu6Dtkoj_lOjovpvmsN-MrzzpsHMfzu18L8zzoAaKN81QNgulv-DUGgg8RHR6bfjKFm2N8llrI43TUDaoNz_dzi755fguL8eJzfmC0',
       is_active: false,
     },
     {
       id: '2',
-      title: 'Have a deep conversation',
-      description: 'Communication Boost',
+      title: 'Avoir une conversation profonde',
+      description: 'Renforcement de la communication',
       image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCB8o2lYDzZi1nxKz8YOy_hTbs5gBL_woZmnohUD3ps7Gt7TeDM-q_y1VWk66kmtuVE_TyNoZsaoA1_vV6s2oWQxgTZZdrcL1oT3qcT3arGdy5ULaj1ny7LBaG6OWtGPaf8EUbFSxWtBP40Mp1s1g2vPvszwDpcW7gc-UvwTwoOiV4Yk9BJcC7dMEhJ9z-DeFxMaBjBcyIZhlGYkZFXYmzQgRamsG-PKP7Xu39DyO_W_1pXkUdUckpBt1Q-5gNMNjwiJumwpPCf83w',
       is_active: false,
     },
@@ -77,7 +77,7 @@ export default function GamificationScreen({ navigation }: GamificationScreenPro
 
         {/* Achievements Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Achievements</Text>
+          <Text style={styles.sectionTitle}>Succès</Text>
           <View style={styles.achievementsList}>
             {achievements.map((achievement) => (
               <View key={achievement.id} style={styles.achievementCard}>
@@ -100,7 +100,7 @@ export default function GamificationScreen({ navigation }: GamificationScreenPro
 
         {/* Challenges Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Challenges</Text>
+          <Text style={styles.sectionTitle}>Défis</Text>
           <View style={styles.challengesList}>
             {challenges.map((challenge) => (
               <View key={challenge.id} style={styles.challengeCard}>
@@ -116,7 +116,7 @@ export default function GamificationScreen({ navigation }: GamificationScreenPro
                     style={styles.activateButton}
                     onPress={() => handleActivateChallenge(challenge.id)}
                   >
-                    <Text style={styles.activateButtonText}>Activate</Text>
+                    <Text style={styles.activateButtonText}>Activer</Text>
                   </TouchableOpacity>
                 </View>
               </View>

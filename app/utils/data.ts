@@ -105,8 +105,8 @@ export const sampleDateIdeas = [
 export const achievements = [
   {
     id: '1',
-    title: 'Completed 10 dates',
-    description: 'Date Night Champion',
+    title: '10 rendez-vous terminés',
+    description: 'Champion des soirées en amoureux',
     icon: '🏆',
     image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBmctUTMPKkJjXaehUZH_352kjkfIVVEIQo7jgkl7AAicKKCQMj2pRwLClX3Xl3hJPRHAhN9dgLLpCTfu6cqu0Rc9dPOpaIvTPBkqeDmKzTawFWm-8QdPBEqpEPlZE8-31cN9GKU07eapbnK5N47qkKW83IXIQL322fNKDGwvLrwZnnN_9E3OTgET2ORc8WTgS1cGr499dHCTagJaJZXLtLy-1awVV5pg2D5uBF6vWbO5G40KaYOakXpJb7FW2zICRJoZxfjANh2lQ',
     category: 'dates',
@@ -114,8 +114,8 @@ export const achievements = [
   },
   {
     id: '2',
-    title: 'Tried 5 outdoor activities',
-    description: 'Adventure Seekers',
+    title: '5 activités en plein air testées',
+    description: 'Chercheurs d\'aventure',
     icon: '🥾',
     image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCC-20oAGCI5-pWKJFGU_wIChEoYeBnHURQDkD3BRVLdYkllc8YfTkjPqZR91wGQYx4ncclpLbN2_k6cdQTX9eA_xeRb6ANOb759Ehm5eHJS3sZf1h08cfCJk6h9NY4p1vlizd2jWaRKRUDDem_hjNRr8-9wAFDVUrHYB5NjVv8BrygmrJhT8_vaQ-1IzbGLQmjjnxfOnSJWxRSpGbqgtkTjx-gwZO5pgdd0b5bUuBDVAUnRv4plhPAxv8yiKkhkJbIe-zzi79rC-k',
     category: 'adventure',
@@ -123,8 +123,8 @@ export const achievements = [
   },
   {
     id: '3',
-    title: 'Tried 5 new cuisines',
-    description: 'Foodie Explorers',
+    title: '5 nouvelles cuisines testées',
+    description: 'Explorateurs gastronomiques',
     icon: '🍜',
     image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA4s2xWkHMBFDhdyeLVIn3bPYfcg_aM-d5RnVqKqiPdffgxP2FVxn7N-QETgKQGLWlhzDD00NxlKvpw4LYUTAj2uw-_AROH8Q20JYAkyGdDbgrSIPG5uiF6uysaWunAqOxERDBJJ94_3XEoCNGHbE-TPRPo7dcc2agPrEGxQenlRExzaP2AmLNKL-VZykAedcnpG708a4nf28aHmS5MSbV8N9sknlcM1v_6PAfg1fkFPXVhmJsAr65PdDT3Ny-3CZb0mJw8rSDWIWM',
     category: 'food',

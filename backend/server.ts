@@ -12,9 +12,9 @@ app.use(express.json());
 app.use('/api/dates', generateDateIdeas);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'YesDate API is running' });
+  res.json({ status: 'OK', message: 'L\'API YesDate est en cours d\'exécution' });
 });
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+console.log(`Serveur en cours d'exécution sur le port ${port}`);
 });

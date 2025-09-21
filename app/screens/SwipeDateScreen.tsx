@@ -16,7 +16,7 @@ import { sampleDateIdeas } from '../utils/data';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.85;
-const CARD_HEIGHT = screenHeight * 0.7;
+const CARD_HEIGHT = screenHeight * 0.6;
 const SWIPE_THRESHOLD = screenWidth * 0.3;
 
 interface SwipeDateScreenProps extends NavigationProps {
@@ -143,7 +143,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Date Ideas</Text>
+        <Text style={styles.headerTitle}>Idées de Date</Text>
         <TouchableOpacity style={styles.filterButton}>
           <Text style={styles.filterIcon}>⚙️</Text>
         </TouchableOpacity>
@@ -211,13 +211,6 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
         >
           <Text style={styles.likeIcon}>♥</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.superLikeButton]}
-          onPress={() => handleButtonPress('right')}
-        >
-          <Text style={styles.superLikeIcon}>⭐</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -233,12 +226,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    minHeight: 60,
   },
   headerTitle: {
-    fontSize: theme.fonts.sizes.xl,
+    fontSize: theme.fonts.sizes.lg,
     fontWeight: '700' as any,
     color: theme.colors.textLight,
+    flex: 1,
+    textAlign: 'center',
+    marginRight: theme.spacing.md,
+    marginBottom: 4,
   },
   filterButton: {
     padding: theme.spacing.sm,
@@ -313,7 +311,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: theme.spacing.lg,
-    gap: theme.spacing.xl,
+    gap: 100,
   },
   actionButton: {
     width: 60,
