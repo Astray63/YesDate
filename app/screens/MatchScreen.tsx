@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,24 +7,86 @@ import {
   SafeAreaView,
   ScrollView,
   Image,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { theme } from '../utils/theme';
 import { NavigationProps, DateIdea } from '../types';
+import { authService } from '../services/supabase';
 
 interface MatchScreenProps extends NavigationProps {
   route: {
     params?: {
       matches?: DateIdea[];
+      roomId?: string;
     };
   };
 }
 
 export default function MatchScreen({ navigation, route }: MatchScreenProps) {
   const matches = route.params?.matches || [];
+  const [resetting, setResetting] = useState(false);
+  const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+
+  // Récupérer l'ID de la room actuelle depuis les paramètres de navigation ou le stockage local
+  React.useEffect(() => {
+    // Récupérer l'ID de la room depuis les paramètres
+    const roomId = route.params?.roomId;
+    
+    if (roomId) {
+      setCurrentRoomId(roomId);
+    } else {
+      // Si pas de room ID, ne pas permettre le reset
+      setCurrentRoomId(null);
+    }
+  }, [route.params]);
 
   const handlePlanDate = (dateIdea: DateIdea) => {
     // Navigate to planning screen or show planning modal
     console.log('Planning date:', dateIdea.title);
+  };
+
+  const handleResetProcess = async () => {
+    if (!currentRoomId) {
+      Alert.alert('Erreur', 'Impossible de trouver la room actuelle');
+      return;
+    }
+
+    Alert.alert(
+      'Réinitialiser le processus',
+      'Êtes-vous sûr de vouloir recommencer le quiz et les swipes ? Toutes vos réponses et matchs seront effacés.',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        {
+          text: 'Réinitialiser',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setResetting(true);
+              
+              // Appeler la fonction de reset du service Supabase
+              await authService.resetRoom(currentRoomId);
+              
+              // Naviguer vers l'écran de quiz pour recommencer
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Quiz' }],
+              });
+              
+              Alert.alert('Succès', 'Le processus a été réinitialisé. Vous pouvez recommencer le quiz !');
+            } catch (error) {
+              console.error('Error resetting room:', error);
+              Alert.alert('Erreur', 'Impossible de réinitialiser le processus. Veuillez réessayer.');
+            } finally {
+              setResetting(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -33,12 +95,22 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('SwipeDate')}
         >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Matchs</Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={handleResetProcess}
+          disabled={resetting}
+        >
+          {resetting ? (
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          ) : (
+            <Text style={styles.resetIcon}>🔄</Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -307,5 +379,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: theme.borderRadius.md,
+  },
+  resetButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary + '1A',
+    borderRadius: 20,
+  },
+  resetIcon: {
+    fontSize: 20,
+    color: theme.colors.primary,
   },
 });

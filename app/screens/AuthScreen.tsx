@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { theme } from '../utils/theme';
 import { NavigationProps } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/supabase';
 
 interface AuthScreenProps extends NavigationProps {}
@@ -48,8 +49,8 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
         }
       }
       
-      // Navigation vers les rooms après authentification
-      navigation.navigate('RoomScreen');
+      // La redirection est maintenant gérée par le AuthNavigator
+      // Le contexte d'authentification va détecter le changement et rediriger automatiquement
     } catch (error: any) {
       Alert.alert('Erreur', error.message || 'Une erreur est survenue');
     } finally {

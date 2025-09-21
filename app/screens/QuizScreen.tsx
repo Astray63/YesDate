@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,39 @@ import {
   SafeAreaView,
   Pressable,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
+import { useRoute } from '@react-navigation/native';
 import { theme } from '../utils/theme';
-import { NavigationProps, QuizOption } from '../types';
-import { quizQuestions } from '../utils/data';
+import { NavigationProps, QuizOption, QuizQuestion, RootStackParamList } from '../types';
+import { getQuizQuestions } from '../utils/data';
 
 interface QuizScreenProps extends NavigationProps {}
 
 export default function QuizScreen({ navigation }: QuizScreenProps) {
+  const route = useRoute();
+  const city = (route.params as RootStackParamList['Quiz'])?.city;
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [fadeAnim] = useState(new Animated.Value(1));
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadQuizQuestions();
+  }, []);
+
+  const loadQuizQuestions = async () => {
+    try {
+      const questions = await getQuizQuestions();
+      setQuizQuestions(questions);
+    } catch (error) {
+      console.error('Error loading quiz questions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const currentQuestion = quizQuestions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === quizQuestions.length - 1;
@@ -35,10 +56,14 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
     if (!selectedOption) return;
 
     if (isLastQuestion) {
-      // Navigate to Main tabs, specifically the SwipeDate screen with answers
+      // Navigate to Main tabs, specifically the SwipeDate screen with answers and roomId
       navigation.navigate('Main', { 
         screen: 'SwipeDate', 
-        params: { quizAnswers: answers } 
+        params: { 
+          quizAnswers: answers,
+          city: city,
+          roomId: global.currentRoomId 
+        } 
       });
     } else {
       // Animate transition and go to next question
@@ -66,6 +91,26 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
       navigation.goBack();
     }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (quizQuestions.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Impossible de charger les questions</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -259,5 +304,20 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: theme.fonts.sizes.md,
     fontWeight: '700' as any,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.mutedLight,
+    textAlign: 'center',
   },
 });

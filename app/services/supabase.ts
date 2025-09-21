@@ -222,4 +222,82 @@ export const authService = {
     if (error) throw error;
     return matches;
   },
+
+  // Reset room data (quiz responses, swipes, and matches)
+  async resetRoom(roomId: string) {
+    try {
+      // Delete quiz responses for the room
+      const { error: quizError } = await supabase
+        .from('quiz_responses')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (quizError) throw quizError;
+
+      // Delete swipes for the room
+      const { error: swipesError } = await supabase
+        .from('swipes')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (swipesError) throw swipesError;
+
+      // Delete matches for the room
+      const { error: matchesError } = await supabase
+        .from('matches')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (matchesError) throw matchesError;
+
+      // Reset room status to 'active' to allow restarting the process
+      const { error: roomError } = await supabase
+        .from('rooms')
+        .update({ 
+          status: 'active'
+        })
+        .eq('id', roomId);
+
+      if (roomError) throw roomError;
+
+      return { success: true, message: 'Room reset successfully' };
+    } catch (error) {
+      console.error('Error resetting room:', error);
+      throw error;
+    }
+  },
+
+  // Check if user has an active room
+  async getUserActiveRoom(userId: string) {
+    try {
+      // Check if user is creator of an active room
+      const { data: creatorRoom, error: creatorError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('creator_id', userId)
+        .in('status', ['waiting', 'active'])
+        .single();
+
+      if (creatorRoom && !creatorError) {
+        return creatorRoom;
+      }
+
+      // Check if user is member of an active room
+      const { data: memberRoom, error: memberError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('member_id', userId)
+        .in('status', ['waiting', 'active'])
+        .single();
+
+      if (memberRoom && !memberError) {
+        return memberRoom;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error checking user active room:', error);
+      return null;
+    }
+  },
 };

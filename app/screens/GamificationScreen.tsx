@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,37 +7,64 @@ import {
   SafeAreaView,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { theme } from '../utils/theme';
 import { NavigationProps } from '../types';
-import { achievements } from '../utils/data';
+import { getAchievements } from '../utils/data';
 
 interface GamificationScreenProps extends NavigationProps {}
 
 export default function GamificationScreen({ navigation }: GamificationScreenProps) {
-  const userLevel = 'Couple 80% foodie 🍣';
-  const userDescription = "Vous êtes une paire née au paradis culinaire ! Continuez à explorer de nouvelles saveurs ensemble.";
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const challenges = [
-    {
-      id: '1',
-      title: 'Organiser un rendez-vous surprise',
-      description: 'Rendez-vous romantique',
-      image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAwM5qI5FLlitbNKN4X6vB2qEhzLJ5cYHC5hjW8qtREH-5sDtmOvZ2rqAZ5avdBbuUU00u5dnMmsOXcQrlbjh8Isv4S95R9I3tD-DUle8DtzkoeOaHXDoAcopq_wubLPY9hfbVkk1SvLWkEqkrIhPkOY3c-slWtT9UTCLINDCu6Dtkoj_lOjovpvmsN-MrzzpsHMfzu18L8zzoAaKN81QNgulv-DUGgg8RHR6bfjKFm2N8llrI43TUDaoNz_dzi755fguL8eJzfmC0',
-      is_active: false,
-    },
-    {
-      id: '2',
-      title: 'Avoir une conversation profonde',
-      description: 'Renforcement de la communication',
-      image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCB8o2lYDzZi1nxKz8YOy_hTbs5gBL_woZmnohUD3ps7Gt7TeDM-q_y1VWk66kmtuVE_TyNoZsaoA1_vV6s2oWQxgTZZdrcL1oT3qcT3arGdy5ULaj1ny7LBaG6OWtGPaf8EUbFSxWtBP40Mp1s1g2vPvszwDpcW7gc-UvwTwoOiV4Yk9BJcC7dMEhJ9z-DeFxMaBjBcyIZhlGYkZFXYmzQgRamsG-PKP7Xu39DyO_W_1pXkUdUckpBt1Q-5gNMNjwiJumwpPCf83w',
-      is_active: false,
-    },
-  ];
+  useEffect(() => {
+    loadGamificationData();
+  }, []);
+
+  const loadGamificationData = async () => {
+    try {
+      setLoading(true);
+      
+      // Charger les succès
+      const achievementsData = await getAchievements();
+      setAchievements(achievementsData);
+      
+      // Pour l'instant, les défis sont vides car ils viendront de la base de données
+      setChallenges([]);
+      
+    } catch (error) {
+      console.error('Error loading gamification data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleActivateChallenge = (challengeId: string) => {
     console.log('Activating challenge:', challengeId);
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Badges</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -70,8 +97,8 @@ export default function GamificationScreen({ navigation }: GamificationScreenPro
           </View>
           
           <View style={styles.profileInfo}>
-            <Text style={styles.userLevel}>{userLevel}</Text>
-            <Text style={styles.userDescription}>{userDescription}</Text>
+            <Text style={styles.userLevel}>Niveau Débutant</Text>
+            <Text style={styles.userDescription}>Commencez votre parcours de couple et débloquez des succès !</Text>
           </View>
         </View>
 
@@ -306,5 +333,10 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: theme.fonts.sizes.sm,
     fontWeight: '700' as any,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

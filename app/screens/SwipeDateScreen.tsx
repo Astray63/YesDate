@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,12 @@ import {
   SafeAreaView,
   Dimensions,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { PanGestureHandler, PanGestureHandlerGestureEvent, State } from 'react-native-gesture-handler';
 import { theme } from '../utils/theme';
 import { NavigationProps, DateIdea } from '../types';
-import { sampleDateIdeas } from '../utils/data';
+import { getPersonalizedDateIdeas } from '../utils/data';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.85;
@@ -23,6 +24,7 @@ interface SwipeDateScreenProps extends NavigationProps {
   route: {
     params?: {
       quizAnswers?: { [key: string]: string };
+      roomId?: string;
     };
   };
 }
@@ -30,7 +32,8 @@ interface SwipeDateScreenProps extends NavigationProps {
 export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenProps) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [swipedCards, setSwipedCards] = useState<{ [key: string]: 'left' | 'right' }>({});
-  const [dates] = useState<DateIdea[]>(sampleDateIdeas);
+  const [dates, setDates] = useState<DateIdea[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -39,6 +42,23 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
 
   const currentCard = dates[currentCardIndex];
   const isLastCard = currentCardIndex >= dates.length - 1;
+
+  useEffect(() => {
+    loadDateIdeas();
+  }, []);
+
+  const loadDateIdeas = async () => {
+    try {
+      setLoading(true);
+      const quizAnswers = route.params?.quizAnswers || {};
+      const dateIdeas = await getPersonalizedDateIdeas(quizAnswers);
+      setDates(dateIdeas);
+    } catch (error) {
+      console.error('Error loading date ideas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const resetCard = () => {
     Animated.parallel([
@@ -70,13 +90,14 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
       }));
       
       if (isLastCard) {
-        // Navigate to matches screen with results
+        // Navigate to matches screen with results and roomId
         const matches = Object.entries(swipedCards)
           .filter(([_, direction]) => direction === 'right')
           .map(([cardId]) => dates.find(date => date.id === cardId))
           .filter(Boolean);
         
-        navigation.navigate('Match', { matches });
+        const roomId = route.params?.roomId;
+        navigation.navigate('Match', { matches, roomId });
       } else {
         setCurrentCardIndex(prev => prev + 1);
         translateX.setValue(0);
@@ -117,6 +138,16 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   const handleButtonPress = (direction: 'left' | 'right') => {
     swipeCard(direction);
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!currentCard) {
     return (
@@ -374,5 +405,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: theme.fonts.sizes.md,
     fontWeight: '700' as any,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

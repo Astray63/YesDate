@@ -106,3 +106,16 @@ export interface NavigationProps {
   navigation: any;
   route?: any;
 }
+
+export type RootStackParamList = {
+  Welcome: undefined;
+  Auth: undefined;
+  CityInput: undefined;
+  Quiz: { city?: string };
+  SwipeDate: { quizAnswers: { [key: string]: string }; city?: string };
+  Match: { matches: any[] };
+  Room: { roomId: string };
+  MainTab: undefined;
+  Community: undefined;
+  Gamification: undefined;
+};
