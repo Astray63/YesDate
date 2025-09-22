@@ -12,12 +12,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../utils/theme';
 import { NavigationProps } from '../types';
 import { getAchievements } from '../utils/data';
+import { authService } from '../services/supabase';
 
 interface GamificationScreenProps extends NavigationProps {}
 
 export default function GamificationScreen({ navigation }: GamificationScreenProps) {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [challenges, setChallenges] = useState<any[]>([]);
+  const [userDates, setUserDates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +36,18 @@ export default function GamificationScreen({ navigation }: GamificationScreenPro
       
       // Pour l'instant, les défis sont vides car ils viendront de la base de données
       setChallenges([]);
+      
+      // Charger les dates de l'utilisateur
+      try {
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser) {
+          const userDatesData = await authService.getUserDateTodos(currentUser.id);
+          setUserDates(userDatesData || []);
+        }
+      } catch (error) {
+        console.error('Error loading user dates:', error);
+        setUserDates([]);
+      }
       
     } catch (error) {
       console.error('Error loading gamification data:', error);
@@ -100,6 +114,75 @@ export default function GamificationScreen({ navigation }: GamificationScreenPro
             <Text style={styles.userLevel}>Niveau Débutant</Text>
             <Text style={styles.userDescription}>Commencez votre parcours de couple et débloquez des succès !</Text>
           </View>
+        </View>
+
+        {/* Dates à faire Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Dates à faire</Text>
+            <TouchableOpacity
+              style={styles.seeAllButton}
+              onPress={() => {
+                // Navigation vers l'écran complet des dates (à implémenter)
+                console.log('Navigate to UserDatesScreen');
+              }}
+            >
+              <Text style={styles.seeAllButtonText}>Voir tout</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {userDates.length === 0 ? (
+            <View style={styles.emptyDatesContainer}>
+              <Text style={styles.emptyDatesEmoji}>📅</Text>
+              <Text style={styles.emptyDatesText}>Aucune date à faire</Text>
+              <Text style={styles.emptyDatesSubtext}>Allez swiper pour trouver des idées de dates !</Text>
+              <TouchableOpacity
+                style={styles.swipeDatesButton}
+                onPress={() => navigation.navigate('SwipeDate')}
+              >
+                <Text style={styles.swipeDatesButtonText}>Découvrir des dates</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.datesList}>
+              {userDates.slice(0, 3).map((date) => (
+                <View key={date.id} style={styles.dateCard}>
+                  <Image
+                    source={{ uri: date.date_idea?.image_url || 'https://via.placeholder.com/60' }}
+                    style={styles.dateImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.dateInfo}>
+                    <Text style={styles.dateTitle} numberOfLines={1}>
+                      {date.date_idea?.title || 'Date sans titre'}
+                    </Text>
+                    <View style={styles.dateMeta}>
+                      <Text style={styles.dateStatus}>
+                        {date.status === 'todo' ? 'À faire' : 
+                         date.status === 'planned' ? 'Planifié' : 'Terminé'}
+                      </Text>
+                      {date.date_idea?.duration && (
+                        <Text style={styles.dateDuration}>⏱️ {date.date_idea.duration}</Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              ))}
+              
+              {userDates.length > 3 && (
+                <TouchableOpacity
+                  style={styles.moreDatesButton}
+                  onPress={() => {
+                    console.log('Navigate to UserDatesScreen');
+                  }}
+                >
+                  <Text style={styles.moreDatesText}>
+                    +{userDates.length - 3} autres dates
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
 
         {/* Achievements Section */}
@@ -338,5 +421,115 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Styles pour la section Dates à faire
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+  },
+  seeAllButton: {
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  seeAllButtonText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.primary,
+    fontWeight: '600' as any,
+  },
+  emptyDatesContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xl,
+    backgroundColor: theme.colors.backgroundLight,
+    borderRadius: theme.borderRadius.md,
+    marginHorizontal: theme.spacing.md,
+  },
+  emptyDatesEmoji: {
+    fontSize: 32,
+    marginBottom: theme.spacing.sm,
+  },
+  emptyDatesText: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: '700' as any,
+    color: theme.colors.textLight,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  emptyDatesSubtext: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.mutedLight,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  swipeDatesButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.full,
+  },
+  swipeDatesButtonText: {
+    color: '#ffffff',
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '700' as any,
+  },
+  datesList: {
+    gap: theme.spacing.sm,
+  },
+  dateCard: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.backgroundLight,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    gap: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  dateImage: {
+    width: 60,
+    height: 60,
+    borderRadius: theme.borderRadius.sm,
+  },
+  dateInfo: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  dateTitle: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: '700' as any,
+    color: theme.colors.textLight,
+    marginBottom: theme.spacing.xs,
+  },
+  dateMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  dateStatus: {
+    fontSize: theme.fonts.sizes.xs,
+    color: theme.colors.primary,
+    fontWeight: '600' as any,
+    backgroundColor: theme.colors.primary + '1A',
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.full,
+  },
+  dateDuration: {
+    fontSize: theme.fonts.sizes.xs,
+    color: theme.colors.mutedLight,
+  },
+  moreDatesButton: {
+    backgroundColor: theme.colors.backgroundLight,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+  moreDatesText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.mutedLight,
+    fontWeight: '600' as any,
   },
 });

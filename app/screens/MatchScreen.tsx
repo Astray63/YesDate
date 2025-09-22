@@ -41,9 +41,47 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
     }
   }, [route.params]);
 
-  const handlePlanDate = (dateIdea: DateIdea) => {
-    // Navigate to planning screen or show planning modal
-    console.log('Planning date:', dateIdea.title);
+  const handlePlanDate = async (dateIdea: DateIdea) => {
+    try {
+      // Get current user
+      const currentUser = await authService.getCurrentUser();
+      if (!currentUser) {
+        Alert.alert('Erreur', 'Vous devez être connecté pour planifier une date');
+        return;
+      }
+
+      // Check if date is already in user's todos
+      const isAlreadyInTodos = await authService.isDateInUserTodos(currentUser.id, dateIdea.id);
+      if (isAlreadyInTodos) {
+        Alert.alert('Déjà ajouté', 'Cette date est déjà dans votre liste "Dates à faire"');
+        return;
+      }
+
+      // Add date to user's todos
+      await authService.addUserDateTodo(currentUser.id, dateIdea.id);
+      
+      Alert.alert(
+        'Succès !',
+        `"${dateIdea.title}" a été ajouté à votre liste "Dates à faire"`,
+        [
+          {
+            text: 'OK',
+            style: 'default',
+          },
+          {
+            text: 'Voir mes dates',
+            style: 'default',
+            onPress: () => {
+              // Navigate to profile or dates screen (to be implemented)
+              console.log('Navigate to dates screen');
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error adding date to todos:', error);
+      Alert.alert('Erreur', 'Impossible d\'ajouter cette date à votre liste');
+    }
   };
 
   const handleResetProcess = async () => {

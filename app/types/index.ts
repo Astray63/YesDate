@@ -40,6 +40,7 @@ export interface DateIdea {
   difficulty?: string;
   cost?: string;
   location_type?: string;
+  area?: string;
   generated_by?: 'ai' | 'community';
   created_at: string;
 }
@@ -60,6 +61,17 @@ export interface DateMatch {
   status: 'matched' | 'planned' | 'completed';
   planned_date?: string;
   created_at: string;
+}
+
+export interface UserDateTodo {
+  id: string;
+  user_id: string;
+  date_idea_id: string;
+  status: 'todo' | 'planned' | 'completed';
+  planned_date?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Achievement {

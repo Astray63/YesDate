@@ -16,8 +16,8 @@ import { NavigationProps, DateIdea } from '../types';
 import { getPersonalizedDateIdeas } from '../utils/data';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth * 0.85;
-const CARD_HEIGHT = screenHeight * 0.6;
+const CARD_WIDTH = screenWidth * 0.9;
+const CARD_HEIGHT = screenHeight * 0.7;
 const SWIPE_THRESHOLD = screenWidth * 0.3;
 
 interface SwipeDateScreenProps extends NavigationProps {
@@ -143,6 +143,84 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     swipeCard(direction);
   };
 
+  // Helper functions for enhanced UI
+  const getCategoryEmoji = (category: string) => {
+    const emojiMap: { [key: string]: string } = {
+      'romantic': '💕',
+      'fun': '🎉',
+      'relaxed': '😌',
+      'adventurous': '🗺️',
+      'food': '🍽️',
+      'nature': '🌲',
+      'culture': '🎭',
+      'sport': '⚽',
+    };
+    return emojiMap[category] || '💝';
+  };
+
+  const getCategoryLabel = (category: string) => {
+    const labelMap: { [key: string]: string } = {
+      'romantic': 'Romantique',
+      'fun': 'Amusant',
+      'relaxed': 'Détendu',
+      'adventurous': 'Aventureux',
+      'food': 'Gastronomie',
+      'nature': 'Nature',
+      'culture': 'Culture',
+      'sport': 'Sport',
+    };
+    return labelMap[category] || category;
+  };
+
+  const getCostLabel = (cost: string) => {
+    const costMap: { [key: string]: string } = {
+      'low': '💰 Éco',
+      'moderate': '💵 Modéré',
+      'high': '💸 Élevé',
+      'luxury': '💎 Luxe',
+    };
+    return costMap[cost] || cost;
+  };
+
+  const getCategoryGradient = (category: string) => {
+    const gradientMap: { [key: string]: string } = {
+      'romantic': '#ff6b9d',
+      'fun': '#ffd93d',
+      'relaxed': '#6bcf7f',
+      'adventurous': '#ff8c42',
+      'food': '#ff6b6b',
+      'nature': '#4ecdc4',
+      'culture': '#a8e6cf',
+      'sport': '#ff8b94',
+    };
+    return gradientMap[category] || '#f04299';
+  };
+
+  const getCategoryPattern = (category: string) => {
+    // Return decorative elements based on category
+    const patterns: { [key: string]: JSX.Element } = {
+      'romantic': <Text style={styles.patternText}>💕 💝 💖</Text>,
+      'fun': <Text style={styles.patternText}>🎉 🎊 🎈</Text>,
+      'relaxed': <Text style={styles.patternText}>🌸 🌺 🌻</Text>,
+      'adventurous': <Text style={styles.patternText}>🗺️ ⛰️ 🌅</Text>,
+      'food': <Text style={styles.patternText}>🍽️ 🥂 🍰</Text>,
+      'nature': <Text style={styles.patternText}>🌲 🌿 🍃</Text>,
+      'culture': <Text style={styles.patternText}>🎭 🎨 🎪</Text>,
+      'sport': <Text style={styles.patternText}>⚽ 🏃‍♀️ 🏆</Text>,
+    };
+    return patterns[category] || <Text style={styles.patternText}>💝 ✨ 💕</Text>;
+  };
+
+  const getLocationTypeLabel = (locationType: string) => {
+    const locationMap: { [key: string]: string } = {
+      'indoor': 'Intérieur',
+      'outdoor': 'Extérieur',
+      'city': 'En ville',
+      'countryside': 'Campagne',
+    };
+    return locationMap[locationType] || locationType;
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -207,25 +285,62 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
               },
             ]}
           >
-            {/* Image Section */}
-            <View style={styles.imageContainer}>
-              <Image
-                source={{ uri: currentCard.image_url }}
-                style={styles.cardImage}
-                resizeMode="cover"
-              />
-              <View style={styles.imageOverlay} />
-              <View style={styles.imageTextOverlay}>
-                <Text style={styles.cardTitle}>{currentCard.title}</Text>
+            {/* Modern Card Design */}
+            <View style={styles.cardInner}>
+              {/* Category Header */}
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryLeft}>
+                  <Text style={styles.categoryEmoji}>{getCategoryEmoji(currentCard.category)}</Text>
+                  <Text style={styles.categoryName}>{getCategoryLabel(currentCard.category)}</Text>
+                </View>
+                {currentCard.cost && (
+                  <View style={styles.costBadge}>
+                    <Text style={styles.costText}>{getCostLabel(currentCard.cost)}</Text>
+                  </View>
+                )}
               </View>
-            </View>
 
-            {/* Content Section */}
-            <View style={styles.cardContent}>
-              <Text style={styles.cardDescription}>
-                {currentCard.description}
-              </Text>
-              <Text style={styles.cardDuration}>{currentCard.duration}</Text>
+              {/* Main Content Area */}
+              <View style={styles.mainContent}>
+                {/* Icon and Title */}
+                <View style={styles.iconTitleSection}>
+                  <View style={[styles.iconCircle, { backgroundColor: getCategoryGradient(currentCard.category) + '20' }]}>
+                    <Text style={styles.mainIcon}>{getCategoryEmoji(currentCard.category)}</Text>
+                  </View>
+                  <View style={styles.titleArea}>
+                    <Text style={styles.cardTitle}>{currentCard.title}</Text>
+                    <View style={styles.metaRow}>
+                      <Text style={styles.durationText}>⏱️ {currentCard.duration}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Description */}
+                <Text style={styles.description}>{currentCard.description}</Text>
+
+                {/* Details Section */}
+                <View style={styles.detailsSection}>
+                  {currentCard.area && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailIcon}>📍</Text>
+                      <Text style={styles.detailText}>{currentCard.area}</Text>
+                    </View>
+                  )}
+                  
+                  <View style={styles.tagsRow}>
+                    {currentCard.location_type && (
+                      <View style={styles.tag}>
+                        <Text style={styles.tagText}>{getLocationTypeLabel(currentCard.location_type)}</Text>
+                      </View>
+                    )}
+                    {currentCard.generated_by === 'ai' && (
+                      <View style={styles.aiTag}>
+                        <Text style={styles.aiTagText}>✨ IA</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
             </View>
           </Animated.View>
         </PanGestureHandler>
@@ -298,38 +413,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.backgroundLight + '80',
     transform: [{ scale: 0.95 }, { translateY: -16 }],
   },
-  imageContainer: {
-    flex: 3,
-    position: 'relative',
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-  },
-  imageOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  },
-  imageTextOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: theme.spacing.md,
-  },
   cardTitle: {
     fontSize: theme.fonts.sizes['2xl'],
     fontWeight: '700' as any,
-    color: '#ffffff',
-  },
-  cardContent: {
-    flex: 2,
-    padding: theme.spacing.md,
-    justifyContent: 'space-between',
+    color: theme.colors.textLight,
   },
   cardDescription: {
     fontSize: theme.fonts.sizes.md,
@@ -345,8 +432,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
     gap: 100,
+    marginTop: theme.spacing.xl,
   },
   actionButton: {
     width: 60,
@@ -414,5 +502,242 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Enhanced card styles
+  headerSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.cardLight,
+    borderTopLeftRadius: theme.borderRadius.lg,
+    borderTopRightRadius: theme.borderRadius.lg,
+  },
+  categoryBadge: {
+    backgroundColor: theme.colors.primary + '20',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '40',
+  },
+  categoryText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '600' as any,
+    color: theme.colors.primary,
+  },
+  costBadge: {
+    backgroundColor: theme.colors.mutedLight + '20',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: theme.colors.mutedLight + '40',
+  },
+  costText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '600' as any,
+    color: theme.colors.mutedLight,
+  },
+  visualSection: {
+    flex: 3,
+    position: 'relative',
+    backgroundColor: theme.colors.backgroundLight,
+  },
+  durationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.xs,
+  },
+  durationIcon: {
+    fontSize: theme.fonts.sizes.sm,
+    marginRight: theme.spacing.xs,
+    color: '#ffffff',
+  },
+  cardContent: {
+    flex: 2,
+    padding: theme.spacing.md,
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.cardLight,
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+  },
+  locationIcon: {
+    fontSize: theme.fonts.sizes.sm,
+    marginRight: theme.spacing.xs,
+    color: theme.colors.mutedLight,
+  },
+  locationText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.mutedLight,
+    fontWeight: '500' as any,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
+  },
+  tag: {
+    backgroundColor: theme.colors.backgroundLight,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+  tagText: {
+    fontSize: theme.fonts.sizes.xs,
+    fontWeight: '500' as any,
+    color: theme.colors.textLight,
+  },
+  aiTag: {
+    backgroundColor: theme.colors.primary + '20',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '40',
+  },
+  aiTagText: {
+    fontSize: theme.fonts.sizes.xs,
+    fontWeight: '600' as any,
+    color: theme.colors.primary,
+  },
+  // New DA compliant styles without images
+  categoryIconContainer: {
+    position: 'absolute',
+    top: theme.spacing.md,
+    right: theme.spacing.md,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  categoryIcon: {
+    fontSize: 32,
+  },
+  decorativePattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.1,
+  },
+  titleSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: theme.spacing.md,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderTopLeftRadius: theme.borderRadius.lg,
+    borderTopRightRadius: theme.borderRadius.lg,
+  },
+  patternText: {
+    fontSize: 40,
+    lineHeight: 50,
+    textAlign: 'center',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  // Modern responsive card design
+  cardInner: {
+    flex: 1,
+    backgroundColor: theme.colors.cardLight,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.backgroundLight,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.borderLight,
+  },
+  categoryLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  categoryEmoji: {
+    fontSize: 20,
+  },
+  categoryName: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '600' as any,
+    color: theme.colors.textLight,
+  },
+  mainContent: {
+    flex: 1,
+    padding: theme.spacing.md,
+    justifyContent: 'space-between',
+  },
+  iconTitleSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  iconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mainIcon: {
+    fontSize: 24,
+  },
+  titleArea: {
+    flex: 1,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  durationText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.mutedLight,
+  },
+  description: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.textLight,
+    lineHeight: 22,
+    marginBottom: theme.spacing.md,
+  },
+  detailsSection: {
+    gap: theme.spacing.sm,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  detailIcon: {
+    fontSize: 16,
+  },
+  detailText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.mutedLight,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
   },
 });

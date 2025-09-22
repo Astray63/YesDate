@@ -300,4 +300,88 @@ export const authService = {
       return null;
     }
   },
+
+  // User Date Todos functions
+  // Add a date to user's todo list
+  async addUserDateTodo(userId: string, dateIdeaId: string) {
+    const { data, error } = await supabase
+      .from('user_date_todos')
+      .insert({
+        user_id: userId,
+        date_idea_id: dateIdeaId,
+        status: 'todo'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get user's date todos
+  async getUserDateTodos(userId: string) {
+    const { data: todos, error } = await supabase
+      .from('user_date_todos_with_details')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return todos;
+  },
+
+  // Update date todo status
+  async updateDateTodoStatus(todoId: string, status: 'todo' | 'planned' | 'completed', plannedDate?: string, notes?: string) {
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString()
+    };
+
+    if (plannedDate) {
+      updateData.planned_date = plannedDate;
+    }
+
+    if (notes !== undefined) {
+      updateData.notes = notes;
+    }
+
+    const { data, error } = await supabase
+      .from('user_date_todos')
+      .update(updateData)
+      .eq('id', todoId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Delete a date todo
+  async deleteDateTodo(todoId: string) {
+    const { error } = await supabase
+      .from('user_date_todos')
+      .delete()
+      .eq('id', todoId);
+
+    if (error) throw error;
+    return { success: true };
+  },
+
+  // Check if date is already in user's todos
+  async isDateInUserTodos(userId: string, dateIdeaId: string) {
+    const { data, error } = await supabase
+      .from('user_date_todos')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('date_idea_id', dateIdeaId)
+      .single();
+
+    if (error && error.code === 'PGRST116') {
+      // No rows found
+      return false;
+    }
+
+    if (error) throw error;
+    return true;
+  },
 };
