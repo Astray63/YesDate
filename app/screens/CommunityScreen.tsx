@@ -4,12 +4,12 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   Image,
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../utils/theme';
 import { NavigationProps } from '../types';
 import { getCommunityDates, getCommunityStats } from '../utils/data';

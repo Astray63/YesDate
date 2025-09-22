@@ -5,11 +5,11 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Dimensions,
   Animated,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { PanGestureHandler, PanGestureHandlerGestureEvent, State } from 'react-native-gesture-handler';
 import { theme } from '../utils/theme';
 import { NavigationProps, DateIdea } from '../types';
@@ -25,6 +25,7 @@ interface SwipeDateScreenProps extends NavigationProps {
     params?: {
       quizAnswers?: { [key: string]: string };
       roomId?: string;
+      city?: string;
     };
   };
 }
@@ -51,7 +52,10 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     try {
       setLoading(true);
       const quizAnswers = route.params?.quizAnswers || {};
-      const dateIdeas = await getPersonalizedDateIdeas(quizAnswers);
+      const userCity = route.params?.city;
+      console.log('Quiz answers:', quizAnswers);
+      console.log('User city from params:', userCity);
+      const dateIdeas = await getPersonalizedDateIdeas(quizAnswers, userCity);
       setDates(dateIdeas);
     } catch (error) {
       console.error('Error loading date ideas:', error);

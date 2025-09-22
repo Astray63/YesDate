@@ -5,9 +5,9 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../utils/theme';
 import { NavigationProps } from '../types';
 

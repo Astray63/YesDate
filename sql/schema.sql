@@ -58,3 +58,22 @@ CREATE TABLE public.users (
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
+
+CREATE TABLE public.achievements (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  title character varying NOT NULL,
+  description text,
+  image_url character varying,
+  points integer DEFAULT 0,
+  user_id uuid,
+  is_public boolean DEFAULT true,
+  category character varying DEFAULT 'general',
+  progress integer DEFAULT 0,
+  max_progress integer DEFAULT 100,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT achievements_pkey PRIMARY KEY (id),
+  CONSTRAINT achievements_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT achievements_progress_check CHECK (progress >= 0 AND progress <= max_progress),
+  CONSTRAINT achievements_points_check CHECK (points >= 0)
+);

@@ -70,22 +70,29 @@ export const getDateIdeas = async (filters?: any): Promise<any[]> => {
 };
 
 export const getAchievements = async (userId?: string): Promise<any[]> => {
-  let query = supabase
-    .from('achievements')
-    .select('*');
-  
-  if (userId) {
-    query = query.or(`user_id.eq.${userId},is_public.eq.true`);
+  try {
+    let query = supabase
+      .from('achievements')
+      .select('*');
+    
+    if (userId) {
+      query = query.or(`user_id.eq.${userId},is_public.eq.true`);
+    }
+    
+    const { data, error } = await query.order('points', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching achievements:', error);
+      // Return sample data as fallback
+      return sampleAchievements;
+    }
+    
+    // If no data from database, return sample data
+    return (data && data.length > 0) ? data : sampleAchievements;
+  } catch (error) {
+    console.error('Error in getAchievements:', error);
+    return sampleAchievements;
   }
-  
-  const { data, error } = await query.order('points', { ascending: false });
-  
-  if (error) {
-    console.error('Error fetching achievements:', error);
-    return [];
-  }
-  
-  return data || [];
 };
 
 export const getCommunityDates = async (type: 'most_loved' | 'trending' = 'most_loved'): Promise<any[]> => {
@@ -422,3 +429,46 @@ export const getPersonalizedDateIdeas = async (quizAnswers: { [key: string]: str
     return await generateAIDateSuggestions(quizAnswers);
   }
 };
+
+// Sample achievements data for development/fallback
+export const sampleAchievements = [
+  {
+    id: '1',
+    title: 'Premier Rendez-vous',
+    description: 'Complétez votre premier swipe de rendez-vous',
+    image_url: 'https://source.unsplash.com/200x200/?celebration,couple',
+    points: 10,
+    is_public: true,
+    category: 'dates',
+    progress: 100,
+    max_progress: 100,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '2',
+    title: 'Explorateur',
+    description: 'Swipez sur 10 idées de rendez-vous différentes',
+    image_url: 'https://source.unsplash.com/200x200/?adventure,explore',
+    points: 25,
+    is_public: true,
+    category: 'exploration',
+    progress: 5,
+    max_progress: 10,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '3',
+    title: 'Match Parfait',
+    description: 'Créez votre premier match de rendez-vous',
+    image_url: 'https://source.unsplash.com/200x200/?heart,love',
+    points: 50,
+    is_public: true,
+    category: 'matches',
+    progress: 0,
+    max_progress: 1,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
