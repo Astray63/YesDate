@@ -7,12 +7,15 @@ import {
   Dimensions,
   Animated,
   ActivityIndicator,
+  Pressable,
 } from 'react-native';
-import { getPersonalizedDateIdeas } from '../utils/data';
+import { getPersonalizedDateIdeas, ProgressCallback } from '../utils/data';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PanGestureHandler, PanGestureHandlerGestureEvent, State } from 'react-native-gesture-handler';
 import { theme } from '../utils/theme';
 import { NavigationProps, DateIdea } from '../types';
+import LoadingSpinner from '../components/LoadingSpinner';
+import DateCardModal from '../components/DateCardModal';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.9;
@@ -34,6 +37,10 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   const [swipedCards, setSwipedCards] = useState<{ [key: string]: 'left' | 'right' }>({});
   const [dates, setDates] = useState<DateIdea[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<DateIdea | null>(null);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -56,16 +63,31 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   const loadDateIdeas = async () => {
     try {
       setLoading(true);
+      setLoadingProgress(0);
+      setLoadingMessage('Initializing...');
+
       const quizAnswers = route.params?.quizAnswers || {};
       const userCity = route.params?.city;
       console.log('Quiz answers:', quizAnswers);
       console.log('User city from params:', userCity);
-      const dateIdeas = await getPersonalizedDateIdeas(quizAnswers, userCity);
+
+      // Callback de progression pour mettre à jour l'interface
+      const onProgress: ProgressCallback = (message: string, progress: number) => {
+        setLoadingMessage(message);
+        setLoadingProgress(progress);
+      };
+
+      const dateIdeas = await getPersonalizedDateIdeas(quizAnswers, userCity, onProgress);
       setDates(dateIdeas);
     } catch (error) {
       console.error('Error loading date ideas:', error);
+      setLoadingMessage('Error loading suggestions. Please try again.');
+      setLoadingProgress(0);
     } finally {
-      setLoading(false);
+      // Petite pause pour que l'utilisateur voie le message de fin
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     }
   };
 
@@ -159,6 +181,13 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     if (event.nativeEvent.state === State.END) {
       const { translationX, velocityX } = event.nativeEvent;
       
+      // Si le mouvement est très petit, on considère que c'est un tap
+      if (Math.abs(translationX) < 10 && Math.abs(velocityX) < 100) {
+        handleCardPress();
+        resetCard();
+        return;
+      }
+      
       if (Math.abs(translationX) > SWIPE_THRESHOLD || Math.abs(velocityX) > 1000) {
         swipeCard(translationX > 0 ? 'right' : 'left');
       } else {
@@ -169,6 +198,18 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
 
   const handleButtonPress = (direction: 'left' | 'right') => {
     swipeCard(direction);
+  };
+
+  const handleCardPress = () => {
+    if (currentCard) {
+      setSelectedCard(currentCard);
+      setModalVisible(true);
+    }
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+    setSelectedCard(null);
   };
 
   // Helper functions for enhanced UI
@@ -268,9 +309,11 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
+        <LoadingSpinner
+          message={loadingMessage}
+          showProgress={true}
+          size="large"
+        />
       </SafeAreaView>
     );
   }
@@ -405,7 +448,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
             ]}
           >
             {/* Modern Card Design */}
-            <View style={styles.cardInner}>
+            <Pressable style={styles.cardInner} onPress={handleCardPress}>
               {/* Visual Section */}
               <DateVisual card={currentCard} style={styles.imageSection} />
 
@@ -463,7 +506,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
                   </View>
                 </View>
               </View>
-            </View>
+            </Pressable>
           </Animated.View>
         </PanGestureHandler>
       </View>
@@ -484,6 +527,13 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
           <Text style={styles.likeIcon}>♥</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal pour les détails de la carte */}
+      <DateCardModal
+        visible={modalVisible}
+        onClose={handleModalClose}
+        dateIdea={selectedCard}
+      />
     </SafeAreaView>
   );
 }

@@ -13,6 +13,7 @@ import { useRoute } from '@react-navigation/native';
 import { theme } from '../utils/theme';
 import { NavigationProps, QuizOption, QuizQuestion, RootStackParamList } from '../types';
 import { getQuizQuestions } from '../utils/data';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface QuizScreenProps extends NavigationProps {}
 
@@ -95,9 +96,11 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
+        <LoadingSpinner
+          message="Chargement des questions du quiz..."
+          showProgress={false}
+          size="medium"
+        />
       </SafeAreaView>
     );
   }

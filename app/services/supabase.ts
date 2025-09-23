@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { customStorage } from '../utils/storage';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -8,6 +9,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    storage: customStorage,
+    storageKey: 'yesdate-auth-token',
+    flowType: 'pkce',
+    debug: false, // Réduire les logs de debug
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'yesdate-app@1.0.0',
+    },
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
   },
 });
 

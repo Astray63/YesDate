@@ -293,23 +293,54 @@ export const getCityCoordinates = async (cityName: string): Promise<{ latitude: 
   }
 };
 
+// Types pour les callbacks de progression
+export type ProgressCallback = (step: string, progress: number) => void;
+
+export type LoadingSteps =
+  | 'analyzing_preferences'
+  | 'researching_locations'
+  | 'generating_suggestions'
+  | 'finalizing_recommendations'
+  | 'processing_response'
+  | 'fallback_mode';
+
 // Fonction pour générer des suggestions de dates avec Gemma 3 27B via OpenRouter
-export const generateAIDateSuggestions = async (quizAnswers: { [key: string]: string }, userLocation?: { latitude: number; longitude: number; city?: string }): Promise<any[]> => {
+export const generateAIDateSuggestions = async (
+  quizAnswers: { [key: string]: string },
+  userLocation?: { latitude: number; longitude: number; city?: string },
+  onProgress?: ProgressCallback
+): Promise<any[]> => {
   try {
     console.log('Generating AI date suggestions for quiz answers:', quizAnswers);
     console.log('User location:', userLocation);
-    
+
+    // Étape 1: Analyse des préférences
+    onProgress?.('Analyzing your preferences...', 10);
+
     // Récupérer la clé API OpenRouter depuis les variables d'environnement
     const openRouterApiKey = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY;
-    
+
     if (!openRouterApiKey) {
       console.warn('OpenRouter API key not found, using fallback suggestions');
+      onProgress?.('Using fallback suggestions...', 20);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Petite pause pour l'UX
       return getFallbackSuggestions(quizAnswers);
     }
-    
-    // Créer le prompt pour Gemma 3 27B
+
+    // Étape 2: Recherche de localisation
+    if (userLocation) {
+      onProgress?.('Researching locations near you...', 30);
+    } else {
+      onProgress?.('Preparing personalized suggestions...', 30);
+    }
+
+    // Étape 3: Création du prompt
+    onProgress?.('Creating personalized prompt...', 40);
     const prompt = createAIPrompt(quizAnswers, userLocation);
-    
+
+    // Étape 4: Appel à l'API IA
+    onProgress?.('Generating AI suggestions...', 60);
+
     // Appeler l'API OpenRouter avec Gemma 3 27B
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -336,14 +367,19 @@ export const generateAIDateSuggestions = async (quizAnswers: { [key: string]: st
         response_format: { type: 'json_object' }
       })
     });
-    
+
     if (!response.ok) {
       throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
     }
-    
+
+    // Étape 5: Traitement de la réponse
+    onProgress?.('Processing AI response...', 80);
     const data = await response.json();
     const aiResponse = JSON.parse(data.choices[0].message.content);
-    
+
+    // Étape 6: Finalisation
+    onProgress?.('Finalizing recommendations...', 90);
+
     // Formater les suggestions de l'IA
     const formattedSuggestions = aiResponse.suggestions.map((suggestion: any, index: number) => ({
       id: `ai_suggestion_${index + 1}`,
@@ -361,12 +397,20 @@ export const generateAIDateSuggestions = async (quizAnswers: { [key: string]: st
       quiz_answers_used: quizAnswers,
       user_location: userLocation, // Stocker la localisation utilisée
     }));
-    
+
+    // Étape finale
+    onProgress?.('Complete! Loading your personalized date ideas...', 100);
+
     console.log('Generated AI suggestions:', formattedSuggestions);
     return formattedSuggestions;
-    
+
   } catch (error) {
     console.error('Error generating AI date suggestions:', error);
+
+    // Mode fallback avec progression
+    onProgress?.('Switching to fallback mode...', 50);
+    await new Promise(resolve => setTimeout(resolve, 300)); // Petite pause
+
     // Retourner des suggestions de base en cas d'erreur
     return getFallbackSuggestions(quizAnswers);
   }
@@ -508,36 +552,42 @@ const getFallbackSuggestions = (quizAnswers: { [key: string]: string }): any[] =
 };
 
 // Fonction combinée qui mélange les suggestions IA et les idées existantes
-export const getPersonalizedDateIdeas = async (quizAnswers: { [key: string]: string }, userCity?: string): Promise<any[]> => {
+export const getPersonalizedDateIdeas = async (
+  quizAnswers: { [key: string]: string },
+  userCity?: string,
+  onProgress?: ProgressCallback
+): Promise<any[]> => {
   try {
     // Obtenir les coordonnées de la ville si fournie
+    onProgress?.('Getting your location...', 5);
     let userLocation = null;
     if (userCity) {
       userLocation = await getCityCoordinates(userCity);
     }
-    
-    // Générer des suggestions IA avec la localisation
-    const aiSuggestions = await generateAIDateSuggestions(quizAnswers, userLocation || undefined);
-    
+
+    // Générer des suggestions IA avec la localisation et callback de progression
+    const aiSuggestions = await generateAIDateSuggestions(quizAnswers, userLocation || undefined, onProgress);
+
     // Récupérer quelques idées existantes qui correspondent aux préférences
+    onProgress?.('Combining with existing ideas...', 95);
     const existingIdeas = await getDateIdeas({
       category: quizAnswers.activity_type,
       cost: quizAnswers.budget,
       location_type: quizAnswers.location,
     });
-    
+
     // Limiter les idées existantes pour ne pas surcharger
     const limitedExistingIdeas = existingIdeas.slice(0, 3);
-    
+
     // Combiner les suggestions IA en premier, puis les idées existantes
     const combinedIdeas = [...aiSuggestions, ...limitedExistingIdeas];
-    
+
     return combinedIdeas;
-    
+
   } catch (error) {
     console.error('Error getting personalized date ideas:', error);
-    // Fallback vers les suggestions IA uniquement
-    return await generateAIDateSuggestions(quizAnswers);
+    // Fallback vers les suggestions IA uniquement avec callback
+    return await generateAIDateSuggestions(quizAnswers, undefined, onProgress);
   }
 };
 
