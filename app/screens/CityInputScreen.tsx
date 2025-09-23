@@ -43,6 +43,7 @@ const CityInputScreen: React.FC = () => {
   const requestLocationPermission = async () => {
     setLocationLoading(true);
     try {
+      // Pour ce cas spécifique, on garde Alert.alert car c'est une confirmation avec choix
       Alert.alert(
         'Localisation',
         'Voulez-vous que nous utilisions votre position actuelle pour détecter automatiquement votre ville ?',
@@ -59,20 +60,12 @@ const CityInputScreen: React.FC = () => {
                 const currentCity = await getCurrentLocationCity();
                 if (currentCity) {
                   setCity(currentCity);
-                  Alert.alert('Ville détectée', `Nous avons détecté que vous êtes à ${currentCity}. Vous pouvez modifier cette ville si nécessaire.`);
+                  Alert.alert('Ville détectée !', `Nous avons détecté que vous êtes à ${currentCity}. Vous pouvez modifier cette ville si nécessaire.`);
                 } else {
-                  Alert.alert(
-                    'Localisation indisponible',
-                    'Nous n\'avons pas pu détecter votre ville automatiquement. Vous pouvez la saisir manuellement.',
-                    [{ text: 'OK' }]
-                  );
+                  Alert.alert('Localisation indisponible', 'Nous n\'avons pas pu détecter votre ville automatiquement. Vous pouvez la saisir manuellement.');
                 }
               } catch (error) {
-                Alert.alert(
-                  'Erreur de localisation',
-                  'Une erreur est survenue lors de la détection de votre position. Vous pouvez saisir votre ville manuellement.',
-                  [{ text: 'OK' }]
-                );
+                Alert.alert('Erreur de localisation', 'Une erreur est survenue lors de la détection de votre position. Vous pouvez saisir votre ville manuellement.');
               } finally {
                 setLocationLoading(false);
               }
@@ -82,11 +75,7 @@ const CityInputScreen: React.FC = () => {
       );
     } catch (error) {
       setLocationLoading(false);
-      Alert.alert(
-        'Erreur',
-        'Impossible d\'accéder à la géolocalisation. Vous pouvez saisir votre ville manuellement.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Erreur', 'Impossible d\'accéder à la géolocalisation. Vous pouvez saisir votre ville manuellement.');
     }
   };
 

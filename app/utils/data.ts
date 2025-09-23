@@ -169,6 +169,18 @@ export const getQuizQuestions = async (): Promise<QuizQuestion[]> => {
         { id: 'duration_weekend', label: 'Weekend', emoji: '📅', value: 'weekend' },
       ],
     },
+    {
+      id: 'mobility_radius',
+      question: 'À combien de km maximum êtes-vous mobile ?',
+      category: 'mobility_radius',
+      options: [
+        { id: 'radius_5km', label: '5 km', emoji: '🚶', value: '5km' },
+        { id: 'radius_10km', label: '10 km', emoji: '🚲', value: '10km' },
+        { id: 'radius_25km', label: '25 km', emoji: '🚗', value: '25km' },
+        { id: 'radius_50km', label: '50 km', emoji: '🚙', value: '50km' },
+        { id: 'radius_unlimited', label: 'Illimité', emoji: '✈️', value: 'unlimited' },
+      ],
+    },
   ];
 };
 
@@ -369,7 +381,11 @@ export const generateAIDateSuggestions = async (
     });
 
     if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+      // Si l'API retourne une erreur 401 ou autre, utiliser le fallback immédiatement
+      console.warn(`OpenRouter API error: ${response.status} ${response.statusText}, using fallback`);
+      onProgress?.('Using smart fallback suggestions...', 70);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return getFallbackSuggestions(quizAnswers);
     }
 
     // Étape 5: Traitement de la réponse
@@ -454,11 +470,20 @@ const createAIPrompt = (quizAnswers: { [key: string]: string }, userLocation?: {
     'weekend': 'weekend'
   };
   
+  const radiusMap: { [key: string]: string } = {
+    '5km': '5 km maximum',
+    '10km': '10 km maximum',
+    '25km': '25 km maximum',
+    '50km': '50 km maximum',
+    'unlimited': 'rayon illimité'
+  };
+  
   const mood = moodMap[quizAnswers.mood] || 'non spécifié';
   const activity = activityMap[quizAnswers.activity_type] || 'non spécifié';
   const location = locationMap[quizAnswers.location] || 'non spécifié';
   const budget = budgetMap[quizAnswers.budget] || 'non spécifié';
   const duration = durationMap[quizAnswers.duration] || 'non spécifié';
+  const mobilityRadius = radiusMap[quizAnswers.mobility_radius] || 'non spécifié';
   
   // Ajouter les informations de géolocalisation si disponibles
   let locationInfo = '';
@@ -477,6 +502,7 @@ Basé sur les préférences suivantes d'un utilisateur pour un rendez-vous :
 - Lieu souhaité : ${location}
 - Budget : ${budget}
 - Durée disponible : ${duration}
+- Rayon de mobilité : ${mobilityRadius}
 ${locationInfo}
 
 IMPORTANT : Génère 5 suggestions de dates personnalisées et créatives ${userLocation ? 'qui se trouvent À PROXIMITÉ de la localisation de l\'utilisateur' : ''}. Pour chaque suggestion, fournis :

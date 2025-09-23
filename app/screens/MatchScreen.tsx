@@ -60,24 +60,7 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
       // Add date to user's todos
       await authService.addUserDateTodo(currentUser.id, dateIdea.id);
       
-      Alert.alert(
-        'Succès !',
-        `"${dateIdea.title}" a été ajouté à votre liste "Dates à faire"`,
-        [
-          {
-            text: 'OK',
-            style: 'default',
-          },
-          {
-            text: 'Voir mes dates',
-            style: 'default',
-            onPress: () => {
-              // Navigate to profile or dates screen (to be implemented)
-              console.log('Navigate to dates screen');
-            },
-          },
-        ]
-      );
+      Alert.alert('Succès !', `"${dateIdea.title}" a été ajouté à votre liste "Dates à faire"`);
     } catch (error) {
       console.error('Error adding date to todos:', error);
       Alert.alert('Erreur', 'Impossible d\'ajouter cette date à votre liste');
@@ -90,6 +73,7 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
       return;
     }
 
+    // Pour ce cas spécifique, on garde Alert.alert car c'est une confirmation avec choix
     Alert.alert(
       'Réinitialiser le processus',
       'Êtes-vous sûr de vouloir recommencer le quiz et les swipes ? Toutes vos réponses et matchs seront effacés.',
@@ -114,7 +98,7 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
                 routes: [{ name: 'Quiz' }],
               });
               
-              Alert.alert('Succès', 'Le processus a été réinitialisé. Vous pouvez recommencer le quiz !');
+              Alert.alert('Succès !', 'Le processus a été réinitialisé. Vous pouvez recommencer le quiz !');
             } catch (error) {
               console.error('Error resetting room:', error);
               Alert.alert('Erreur', 'Impossible de réinitialiser le processus. Veuillez réessayer.');

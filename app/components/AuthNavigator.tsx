@@ -30,10 +30,20 @@ export default function AuthNavigator() {
   const { user, loading } = useAuth();
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
   const [checkingRoom, setCheckingRoom] = useState(false);
+  const [waitForAuthPopup, setWaitForAuthPopup] = useState(false);
 
   useEffect(() => {
     const checkUserStatus = async () => {
       if (!loading && user) {
+        console.log('🔍 AuthNavigator: Utilisateur connecté, vérification du statut...');
+        
+        // Vérifier si on doit attendre la popup de connexion
+        if (global.currentRoomId === 'auth_popup_pending') {
+          console.log('⏳ AuthNavigator: En attente de la popup de connexion...');
+          setWaitForAuthPopup(true);
+          return;
+        }
+        
         // Vérifier si l'utilisateur a déjà une room active
         setCheckingRoom(true);
         try {
@@ -74,6 +84,12 @@ export default function AuthNavigator() {
     );
   }
 
+  // Si on attend la popup de connexion, ne pas rediriger
+  if (waitForAuthPopup) {
+    console.log('🎯 AuthNavigator: Maintien sur l\'écran actuel pour la popup de connexion');
+    return null; // Laisser l'écran actuel (AuthScreen) visible
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -88,10 +104,17 @@ export default function AuthNavigator() {
         <Stack.Screen name="RoomScreen" component={RoomScreen} />
         <Stack.Screen name="CityInput" component={CityInputScreen} />
         <Stack.Screen name="Quiz" component={QuizScreen} />
+        <Stack.Screen name="SwipeDate" component={SwipeDateScreen} />
+        <Stack.Screen name="Match" component={MatchScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
         <Stack.Screen 
           name="Gamification" 
           component={GamificationScreen}
+          options={{ presentation: 'modal' }}
+        />
+        <Stack.Screen 
+          name="Community" 
+          component={CommunityScreen}
           options={{ presentation: 'modal' }}
         />
       </Stack.Navigator>

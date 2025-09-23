@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -26,12 +25,10 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
 
   const handleAuth = async () => {
     if (!email || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
       return;
     }
 
     if (!isLogin && !fullName) {
-      Alert.alert('Erreur', 'Veuillez entrer votre nom complet');
       return;
     }
 
@@ -40,23 +37,24 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
       if (isLogin) {
         // Connexion avec le vrai service Supabase
         await authService.signIn(email, password);
-        Alert.alert('Succès', 'Connecté avec succès!');
+        console.log('Connexion réussie !');
       } else {
         // Inscription avec le vrai service Supabase
         const { user } = await authService.signUp(email, password, fullName);
         if (user) {
-          Alert.alert('Succès', 'Compte créé avec succès! Vérifiez votre email.');
+          console.log('Compte créé avec succès');
         }
       }
       
       // La redirection est maintenant gérée par le AuthNavigator
       // Le contexte d'authentification va détecter le changement et rediriger automatiquement
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Une erreur est survenue');
+      console.log('Erreur de connexion:', error);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -155,6 +153,7 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
           </View>
         </View>
       </KeyboardAvoidingView>
+      
     </SafeAreaView>
   );
 }
