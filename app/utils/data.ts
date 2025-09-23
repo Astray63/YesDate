@@ -1,5 +1,83 @@
 import { QuizQuestion } from '../types';
 import { supabase } from '../services/supabase';
+import * as Location from 'expo-location';
+
+// Liste de villes prédéfinies pour l'autocomplétion
+export const predefinedCities = [
+  'Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier',
+  'Bordeaux', 'Lille', 'Rennes', 'Reims', 'Le Havre', 'Saint-Étienne', 'Toulon', 'Angers',
+  'Grenoble', 'Dijon', 'Nîmes', 'Aix-en-Provence', 'Saint-Denis', 'Le Mans', 'Clermont-Ferrand',
+  'Brest', 'Limoges', 'Tours', 'Amiens', 'Metz', 'Besançon', 'Perpignan', 'Orléans',
+  'Boulogne-Billancourt', 'Mulhouse', 'Rouen', 'Caen', 'Nancy', 'Saint-Denis', 'Argenteuil',
+  'Montreuil', 'Roubaix', 'Dunkerque', 'Avignon', 'Vitry-sur-Seine', 'Pau', 'Aulnay-sous-Bois',
+  'Cannes', 'Colombes', 'Asnières-sur-Seine', 'Rueil-Malmaison', 'Antibes', 'Saint-Maur-des-Fossés',
+  'Champigny-sur-Marne', 'Aubervilliers', 'Béziers', 'La Rochelle', 'Calais', 'Cannes', 'Antibes'
+];
+
+// Fonction d'autocomplétion de villes
+export const getCitySuggestions = (input: string): string[] => {
+  if (!input || input.length < 2) return [];
+
+  const searchTerm = input.toLowerCase().trim();
+  return predefinedCities.filter(city =>
+    city.toLowerCase().includes(searchTerm)
+  ).slice(0, 10); // Limiter à 10 suggestions
+};
+
+// Fonction pour obtenir la ville actuelle via géolocalisation
+export const getCurrentLocationCity = async (): Promise<string | null> => {
+  try {
+    // Demander les permissions de géolocalisation
+    const { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status !== 'granted') {
+      console.log('Permission de géolocalisation refusée');
+      return null;
+    }
+
+    // Obtenir la position actuelle
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
+
+    console.log('Position obtenue:', location.coords);
+
+    // Faire du reverse geocoding pour obtenir le nom de la ville
+    const reverseGeocode = await Location.reverseGeocodeAsync({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    });
+
+    if (reverseGeocode.length > 0) {
+      const address = reverseGeocode[0];
+      // Essayer différents champs pour obtenir le nom de la ville
+      const cityName = address.city || address.region || address.subregion || address.district || address.streetNumber;
+
+      if (cityName) {
+        console.log('Ville détectée:', cityName);
+        return cityName;
+      }
+    }
+
+    console.log('Aucune ville trouvée dans les données de géocodage');
+    return null;
+  } catch (error) {
+    console.error('Error getting current location:', error);
+
+    // Gérer les différents types d'erreurs
+    if (error instanceof Error) {
+      if (error.message.includes('PERMISSION_DENIED')) {
+        console.log('Permission de géolocalisation refusée');
+      } else if (error.message.includes('TIMEOUT')) {
+        console.log('Timeout de géolocalisation');
+      } else if (error.message.includes('LOCATION_UNAVAILABLE')) {
+        console.log('Service de localisation indisponible');
+      }
+    }
+
+    return null;
+  }
+};
 
 // Service d'images alternatif pour remplacer Unsplash
 export const getImageUrl = (category: string, title: string, index: number = 0): string => {
