@@ -2,19 +2,17 @@ import React, { useState, useRef, useEffect, JSX } from 'react';
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
   Animated,
   ActivityIndicator,
 } from 'react-native';
-import { getImageUrl, getFallbackImageUrl } from '../utils/data';
+import { getPersonalizedDateIdeas } from '../utils/data';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PanGestureHandler, PanGestureHandlerGestureEvent, State } from 'react-native-gesture-handler';
 import { theme } from '../utils/theme';
 import { NavigationProps, DateIdea } from '../types';
-import { getPersonalizedDateIdeas } from '../utils/data';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.9;
@@ -251,58 +249,17 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     return locationMap[locationType] || locationType;
   };
 
-  // Composant d'image avec fallback et retry
-  const DateImage = ({ card, style }: { card: DateIdea; style: any }) => {
-    const [imageError, setImageError] = useState(false);
-    const [imageLoading, setImageLoading] = useState(true);
-    const [retryCount, setRetryCount] = useState(0);
-    const maxRetries = 2;
-
-    const handleImageError = () => {
-      if (retryCount < maxRetries) {
-        // Retry avec un seed différent
-        setRetryCount(prev => prev + 1);
-        setImageError(false);
-        setImageLoading(true);
-      } else {
-        // Après max retries, utiliser le fallback
-        setImageError(true);
-        setImageLoading(false);
-      }
-    };
-
-    const handleImageLoad = () => {
-      setImageLoading(false);
-      setRetryCount(0); // Reset retry count on success
-    };
-
-    // Générer l'URL d'image avec le compteur de retry
-    const currentImageUrl = imageError
-      ? getFallbackImageUrl(card.category)
-      : getImageUrl(card.category, card.title, parseInt(card.id.split('_')[2] || '0') + retryCount);
-
-    const imageSource = { uri: currentImageUrl };
-
+  // Composant visuel sans image
+  const DateVisual = ({ card, style }: { card: DateIdea; style: any }) => {
     return (
-      <View style={[style, { position: 'relative' }]}>
-        <Image
-          source={imageSource}
-          style={styles.cardImage}
-          onError={handleImageError}
-          onLoad={handleImageLoad}
-          resizeMode="cover"
-        />
-        {imageLoading && (
-          <View style={styles.imageLoadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            {retryCount > 0 && (
-              <Text style={styles.retryText}>Tentative {retryCount}/{maxRetries}</Text>
-            )}
-          </View>
-        )}
-        {/* Overlay avec les motifs décoratifs */}
+      <View style={[style, { position: 'relative', backgroundColor: getCategoryGradient(card.category) + '20' }]}>
+        {/* Motifs décoratifs */}
         <View style={styles.imageOverlay}>
           {getCategoryPattern(card.category)}
+        </View>
+        {/* Icône centrale de la catégorie */}
+        <View style={styles.centralIconContainer}>
+          <Text style={styles.centralIcon}>{getCategoryEmoji(card.category)}</Text>
         </View>
       </View>
     );
@@ -368,8 +325,8 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
           >
             {/* Modern Card Design for Preview */}
             <View style={styles.cardInner}>
-              {/* Image Section */}
-              <DateImage card={nextCard} style={styles.imageSection} />
+              {/* Visual Section */}
+              <DateVisual card={nextCard} style={styles.imageSection} />
 
               {/* Category Header */}
               <View style={styles.categoryHeader}>
@@ -449,8 +406,8 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
           >
             {/* Modern Card Design */}
             <View style={styles.cardInner}>
-              {/* Image Section */}
-              <DateImage card={currentCard} style={styles.imageSection} />
+              {/* Visual Section */}
+              <DateVisual card={currentCard} style={styles.imageSection} />
 
               {/* Category Header */}
               <View style={styles.categoryHeader}>
@@ -944,5 +901,22 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     marginTop: theme.spacing.xs,
     textAlign: 'center',
+  },
+  // Styles pour l'icône centrale
+  centralIconContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -25 }, { translateY: -25 }],
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.lg,
+  },
+  centralIcon: {
+    fontSize: 30,
   },
 });
