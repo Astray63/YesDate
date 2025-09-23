@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, JSX } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Animated,
   ActivityIndicator,
 } from 'react-native';
+import { getImageUrl, getFallbackImageUrl } from '../utils/data';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PanGestureHandler, PanGestureHandlerGestureEvent, State } from 'react-native-gesture-handler';
 import { theme } from '../utils/theme';
@@ -41,7 +42,13 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   const rotate = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(1)).current;
 
+  // Animation values for next card preview
+  const nextCardTranslateX = useRef(new Animated.Value(0)).current;
+  const nextCardScale = useRef(new Animated.Value(0.95)).current;
+  const nextCardOpacity = useRef(new Animated.Value(0.7)).current;
+
   const currentCard = dates[currentCardIndex];
+  const nextCard = dates[currentCardIndex + 1];
   const isLastCard = currentCardIndex >= dates.length - 1;
 
   useEffect(() => {
@@ -70,6 +77,10 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
       Animated.spring(translateY, { toValue: 0, useNativeDriver: true }),
       Animated.spring(rotate, { toValue: 0, useNativeDriver: true }),
       Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
+      // Reset next card preview animations
+      Animated.spring(nextCardTranslateX, { toValue: 0, useNativeDriver: true }),
+      Animated.spring(nextCardScale, { toValue: 0.95, useNativeDriver: true }),
+      Animated.spring(nextCardOpacity, { toValue: 0.7, useNativeDriver: true }),
     ]).start();
   };
 
@@ -108,23 +119,42 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
         translateY.setValue(0);
         rotate.setValue(0);
         scale.setValue(1);
+
+        // Reset next card preview animations
+        nextCardTranslateX.setValue(0);
+        nextCardScale.setValue(0.95);
+        nextCardOpacity.setValue(0.7);
       }
     });
   };
 
   const onGestureEvent = (event: PanGestureHandlerGestureEvent) => {
     const { translationX, translationY } = event.nativeEvent;
-    
+
     translateX.setValue(translationX);
     translateY.setValue(translationY);
-    
+
     // Rotation based on horizontal movement
     const rotateValue = translationX / screenWidth;
     rotate.setValue(rotateValue);
-    
+
     // Scale based on movement
     const scaleValue = 1 - Math.abs(translationX) / screenWidth * 0.1;
     scale.setValue(Math.max(scaleValue, 0.9));
+
+    // Next card preview animations based on swipe movement
+    if (nextCard) {
+      const previewProgress = Math.abs(translationX) / screenWidth;
+      const previewOpacity = 0.7 + (previewProgress * 0.3); // 0.7 to 1.0
+      const previewScale = 0.95 + (previewProgress * 0.05); // 0.95 to 1.0
+
+      nextCardOpacity.setValue(Math.min(previewOpacity, 1));
+      nextCardScale.setValue(Math.min(previewScale, 1));
+
+      // Subtle movement of next card based on swipe direction
+      const nextCardMovement = translationX * 0.1; // 10% of main card movement
+      nextCardTranslateX.setValue(nextCardMovement);
+    }
   };
 
   const onHandlerStateChange = (event: PanGestureHandlerGestureEvent) => {
@@ -221,6 +251,63 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     return locationMap[locationType] || locationType;
   };
 
+  // Composant d'image avec fallback et retry
+  const DateImage = ({ card, style }: { card: DateIdea; style: any }) => {
+    const [imageError, setImageError] = useState(false);
+    const [imageLoading, setImageLoading] = useState(true);
+    const [retryCount, setRetryCount] = useState(0);
+    const maxRetries = 2;
+
+    const handleImageError = () => {
+      if (retryCount < maxRetries) {
+        // Retry avec un seed différent
+        setRetryCount(prev => prev + 1);
+        setImageError(false);
+        setImageLoading(true);
+      } else {
+        // Après max retries, utiliser le fallback
+        setImageError(true);
+        setImageLoading(false);
+      }
+    };
+
+    const handleImageLoad = () => {
+      setImageLoading(false);
+      setRetryCount(0); // Reset retry count on success
+    };
+
+    // Générer l'URL d'image avec le compteur de retry
+    const currentImageUrl = imageError
+      ? getFallbackImageUrl(card.category)
+      : getImageUrl(card.category, card.title, parseInt(card.id.split('_')[2] || '0') + retryCount);
+
+    const imageSource = { uri: currentImageUrl };
+
+    return (
+      <View style={[style, { position: 'relative' }]}>
+        <Image
+          source={imageSource}
+          style={styles.cardImage}
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+          resizeMode="cover"
+        />
+        {imageLoading && (
+          <View style={styles.imageLoadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            {retryCount > 0 && (
+              <Text style={styles.retryText}>Tentative {retryCount}/{maxRetries}</Text>
+            )}
+          </View>
+        )}
+        {/* Overlay avec les motifs décoratifs */}
+        <View style={styles.imageOverlay}>
+          {getCategoryPattern(card.category)}
+        </View>
+      </View>
+    );
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -264,9 +351,84 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
 
       {/* Cards Container */}
       <View style={styles.cardsContainer}>
-        {/* Background card */}
-        <View style={[styles.card, styles.backgroundCard]} />
-        
+        {/* Next card preview */}
+        {nextCard && (
+          <Animated.View
+            style={[
+              styles.card,
+              styles.backgroundCard,
+              {
+                transform: [
+                  { translateX: nextCardTranslateX },
+                  { scale: nextCardScale },
+                ],
+                opacity: nextCardOpacity,
+              },
+            ]}
+          >
+            {/* Modern Card Design for Preview */}
+            <View style={styles.cardInner}>
+              {/* Image Section */}
+              <DateImage card={nextCard} style={styles.imageSection} />
+
+              {/* Category Header */}
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryLeft}>
+                  <Text style={styles.categoryEmoji}>{getCategoryEmoji(nextCard.category)}</Text>
+                  <Text style={styles.categoryName}>{getCategoryLabel(nextCard.category)}</Text>
+                </View>
+                {nextCard.cost && (
+                  <View style={styles.costBadge}>
+                    <Text style={styles.costText}>{getCostLabel(nextCard.cost)}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Main Content Area */}
+              <View style={styles.mainContent}>
+                {/* Icon and Title */}
+                <View style={styles.iconTitleSection}>
+                  <View style={[styles.iconCircle, { backgroundColor: getCategoryGradient(nextCard.category) + '20' }]}>
+                    <Text style={styles.mainIcon}>{getCategoryEmoji(nextCard.category)}</Text>
+                  </View>
+                  <View style={styles.titleArea}>
+                    <Text style={styles.cardTitle}>{nextCard.title}</Text>
+                    <View style={styles.metaRow}>
+                      <Text style={styles.durationText}>⏱️ {nextCard.duration}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Description */}
+                <Text style={styles.description}>{nextCard.description}</Text>
+
+                {/* Details Section */}
+                <View style={styles.detailsSection}>
+                  {nextCard.area && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailIcon}>📍</Text>
+                      <Text style={styles.detailText}>{nextCard.area}</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.tagsRow}>
+                    {nextCard.location_type && (
+                      <View style={styles.tag}>
+                        <Text style={styles.tagText}>{getLocationTypeLabel(nextCard.location_type)}</Text>
+                      </View>
+                    )}
+                    {nextCard.generated_by === 'ai' && (
+                      <View style={styles.aiTag}>
+                        <Text style={styles.aiTagText}>✨ IA</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+        )}
+
         {/* Main card */}
         <PanGestureHandler
           onGestureEvent={onGestureEvent}
@@ -287,6 +449,9 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
           >
             {/* Modern Card Design */}
             <View style={styles.cardInner}>
+              {/* Image Section */}
+              <DateImage card={currentCard} style={styles.imageSection} />
+
               {/* Category Header */}
               <View style={styles.categoryHeader}>
                 <View style={styles.categoryLeft}>
@@ -739,5 +904,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.xs,
+  },
+  // Styles pour les images
+  cardImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  imageLoadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.backgroundLight + '80',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.1,
+  },
+  imageSection: {
+    height: CARD_HEIGHT * 0.4,
+    width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  retryText: {
+    color: theme.colors.primary,
+    fontSize: theme.fonts.sizes.sm,
+    marginTop: theme.spacing.xs,
+    textAlign: 'center',
   },
 });

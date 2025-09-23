@@ -1,6 +1,37 @@
 import { QuizQuestion } from '../types';
 import { supabase } from '../services/supabase';
 
+// Service d'images alternatif pour remplacer Unsplash
+export const getImageUrl = (category: string, title: string, index: number = 0): string => {
+  // Utiliser Lorem Picsum avec des dimensions cohérentes
+  const width = 400;
+  const height = 300;
+
+  // Mapper les catégories vers des mots-clés pour Lorem Picsum
+  const categoryKeywords: { [key: string]: string[] } = {
+    'romantic': ['romance', 'couple', 'love', 'heart', 'rose', 'candle', 'dinner'],
+    'fun': ['fun', 'party', 'games', 'laugh', 'friends', 'colorful', 'bright'],
+    'relaxed': ['nature', 'peaceful', 'calm', 'zen', 'spa', 'meditation', 'sunset'],
+    'adventurous': ['adventure', 'mountain', 'hiking', 'travel', 'explore', 'outdoor'],
+    'food': ['food', 'restaurant', 'cooking', 'dining', 'wine', 'pasta', 'pizza'],
+    'nature': ['nature', 'forest', 'trees', 'park', 'green', 'landscape', 'outdoor'],
+    'culture': ['culture', 'art', 'museum', 'music', 'theater', 'history', 'architecture'],
+    'sport': ['sport', 'fitness', 'gym', 'running', 'tennis', 'football', 'basketball']
+  };
+
+  const keywords = categoryKeywords[category] || ['dating', 'couple', 'romance'];
+  const keyword = keywords[index % keywords.length];
+
+  // Retourner une URL Lorem Picsum avec le mot-clé
+  return `https://picsum.photos/seed/${keyword}-${index}/${width}/${height}`;
+};
+
+// URL d'image de fallback en ligne (utilisée si l'API échoue)
+export const getFallbackImageUrl = (category: string): string => {
+  // Utiliser une URL d'image de fallback en ligne avec un seed fixe
+  return `https://picsum.photos/seed/dating-app-fallback-${category}/400/300`;
+};
+
 // Récupérer les questions de quiz (en dur comme demandé)
 export const getQuizQuestions = async (): Promise<QuizQuestion[]> => {
   // Retourner les questions en dur au lieu de les charger depuis la base de données
@@ -102,7 +133,7 @@ export const getCommunityDates = async (type: 'most_loved' | 'trending' = 'most_
       id: 'demo_date_1',
       title: 'Pique-nique au parc',
       description: 'Profitez d\'un pique-nique romantique dans un beau parc.',
-      image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+      category: 'relaxed',
       type: 'most_loved',
       likes_count: 245,
       created_at: new Date().toISOString(),
@@ -111,7 +142,7 @@ export const getCommunityDates = async (type: 'most_loved' | 'trending' = 'most_
       id: 'demo_date_2',
       title: 'Cours de cuisine italienne',
       description: 'Apprenez à préparer des pâtes fraîches ensemble.',
-      image_url: 'https://images.unsplash.com/photo-1556910103-1c02745c7144?w=400&h=300&fit=crop',
+      category: 'food',
       type: 'most_loved',
       likes_count: 189,
       created_at: new Date().toISOString(),
@@ -120,7 +151,7 @@ export const getCommunityDates = async (type: 'most_loved' | 'trending' = 'most_
       id: 'demo_date_3',
       title: 'Soirée jeux de société',
       description: 'Découvrez de nouveaux jeux de société à deux.',
-      image_url: 'https://images.unsplash.com/photo-1526406543561-8f250a4a3032?w=400&h=300&fit=crop',
+      category: 'fun',
       type: 'trending',
       likes_count: 156,
       created_at: new Date().toISOString(),
@@ -129,15 +160,20 @@ export const getCommunityDates = async (type: 'most_loved' | 'trending' = 'most_
       id: 'demo_date_4',
       title: 'Randonnée au coucher du soleil',
       description: 'Une belle randonnée avec vue imprenable sur le coucher du soleil.',
-      image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+      category: 'adventurous',
       type: 'trending',
       likes_count: 134,
       created_at: new Date().toISOString(),
     },
   ];
-  
-  // Filtrer par type et retourner les données
-  return demoData.filter(item => item.type === type);
+
+  // Ajouter les URLs d'images et filtrer par type
+  const demoDataWithImages = demoData.map((item, index) => ({
+    ...item,
+    image_url: getImageUrl(item.category, item.title, index),
+  }));
+
+  return demoDataWithImages.filter(item => item.type === type);
 };
 
 export const getCommunityStats = async (): Promise<any> => {
@@ -235,7 +271,7 @@ export const generateAIDateSuggestions = async (quizAnswers: { [key: string]: st
       id: `ai_suggestion_${index + 1}`,
       title: suggestion.title,
       description: suggestion.description,
-      image_url: suggestion.image_url || `https://source.unsplash.com/400x300/?${suggestion.title.replace(/\s+/g, ',')}`,
+      image_url: getImageUrl(suggestion.category, suggestion.title, index),
       duration: suggestion.duration,
       category: suggestion.category,
       cost: suggestion.cost,
@@ -353,7 +389,6 @@ const getFallbackSuggestions = (quizAnswers: { [key: string]: string }): any[] =
     {
       title: 'Dîner romantique',
       description: 'Profitez d\'un dîner intime dans un restaurant de votre choix.',
-      image_url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop',
       duration: '2h',
       category: 'romantic',
       cost: 'moderate',
@@ -362,7 +397,6 @@ const getFallbackSuggestions = (quizAnswers: { [key: string]: string }): any[] =
     {
       title: 'Promenade dans le parc',
       description: 'Détendez-vous en vous promenant main dans la main.',
-      image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
       duration: '1h',
       category: 'relaxed',
       cost: 'low',
@@ -371,20 +405,19 @@ const getFallbackSuggestions = (quizAnswers: { [key: string]: string }): any[] =
     {
       title: 'Soirée cinéma',
       description: 'Regardez un bon film ensemble dans une salle confortable.',
-      image_url: 'https://images.unsplash.com/photo-1489599904447-b47de73b2377?w=400&h=300&fit=crop',
       duration: '3h',
       category: 'fun',
       cost: 'low',
       location_type: 'city',
     }
   ];
-  
+
   // Ajouter des métadonnées et formater les suggestions
   return suggestions.map((suggestion: any, index: number) => ({
     id: `ai_suggestion_${index + 1}`,
     title: suggestion.title,
     description: suggestion.description,
-    image_url: suggestion.image_url,
+    image_url: getImageUrl(suggestion.category, suggestion.title, index),
     duration: suggestion.duration,
     category: suggestion.category,
     cost: suggestion.cost,
@@ -436,7 +469,7 @@ export const sampleAchievements = [
     id: '1',
     title: 'Premier Rendez-vous',
     description: 'Complétez votre premier swipe de rendez-vous',
-    image_url: 'https://source.unsplash.com/200x200/?celebration,couple',
+    image_url: getImageUrl('romantic', 'Premier Rendez-vous', 0),
     points: 10,
     is_public: true,
     category: 'dates',
@@ -449,7 +482,7 @@ export const sampleAchievements = [
     id: '2',
     title: 'Explorateur',
     description: 'Swipez sur 10 idées de rendez-vous différentes',
-    image_url: 'https://source.unsplash.com/200x200/?adventure,explore',
+    image_url: getImageUrl('adventurous', 'Explorateur', 1),
     points: 25,
     is_public: true,
     category: 'exploration',
@@ -462,7 +495,7 @@ export const sampleAchievements = [
     id: '3',
     title: 'Match Parfait',
     description: 'Créez votre premier match de rendez-vous',
-    image_url: 'https://source.unsplash.com/200x200/?heart,love',
+    image_url: getImageUrl('romantic', 'Match Parfait', 2),
     points: 50,
     is_public: true,
     category: 'matches',
