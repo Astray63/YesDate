@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Heart, Lightbulb, Trophy, Search } from 'lucide-react-native';
 
 // Screens
-import DatesScreen from '../screens/DatesScreen';
+import SwipeDateScreen from '../screens/SwipeDateScreen';
 import MatchScreen from '../screens/MatchScreen';
 import CommunityScreen from '../screens/CommunityScreen';
 import GamificationScreen from '../screens/GamificationScreen';
@@ -48,13 +48,13 @@ export default function MainTabNavigator() {
     >
       <Tab.Screen
         name="SwipeDate"
-        component={DatesScreen}
+        component={SwipeDateScreen}
         options={{
           tabBarLabel: 'Dates',
           tabBarIcon: ({ color, focused }) => (
-            <Search
-              size={focused ? 22 : 18}
-              color={color}
+            <Search 
+              size={focused ? 22 : 18} 
+              color={color} 
               strokeWidth={focused ? 2.5 : 2}
             />
           ),
