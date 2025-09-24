@@ -1,6 +1,11 @@
 import { QuizQuestion } from '../types';
 import { supabase } from '../services/supabase';
 import * as Location from 'expo-location';
+import Constants from 'expo-constants';
+
+// IMPORTANT: Use direct access so Expo statically inlines EXPO_PUBLIC_* at build time.
+// @ts-ignore - Replaced by Expo during bundling
+const OPENROUTER_API_KEY_FROM_ENV: string | undefined = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY;
 
 // Liste de villes prédéfinies pour l'autocomplétion
 export const predefinedCities = [
@@ -329,14 +334,26 @@ export const generateAIDateSuggestions = async (
     // Étape 1: Analyse des préférences
     onProgress?.('Analyzing your preferences...', 10);
 
-    // Récupérer la clé API OpenRouter depuis les variables d'environnement Expo
-    const openRouterApiKey = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY;
+    // Récupérer la clé API OpenRouter depuis les variables d'environnement Expo/Metro
+    const openRouterApiKey =
+      OPENROUTER_API_KEY_FROM_ENV ||
+      Constants.expoConfig?.extra?.EXPO_PUBLIC_OPENROUTER_API_KEY ||
+      (Constants as any).manifest2?.extra?.EXPO_PUBLIC_OPENROUTER_API_KEY ||
+      (Constants as any).manifest?.extra?.EXPO_PUBLIC_OPENROUTER_API_KEY;
 
     if (!openRouterApiKey) {
       console.warn('OpenRouter API key not found, using fallback suggestions');
       onProgress?.('Using fallback suggestions...', 20);
       await new Promise(resolve => setTimeout(resolve, 500)); // Petite pause pour l'UX
       return getFallbackSuggestions(quizAnswers);
+    }
+
+    if (__DEV__) {
+      const masked =
+        typeof openRouterApiKey === 'string'
+          ? `${openRouterApiKey.slice(0, 4)}...${openRouterApiKey.slice(-4)}`
+          : 'none';
+      console.log('OpenRouter API key loaded:', masked);
     }
 
     // Étape 2: Recherche de localisation
@@ -410,6 +427,18 @@ FORMAT DE RÉPONSE JSON OBLIGATOIRE :
     if (!response.ok) {
       // Si l'API retourne une erreur 401 ou autre, utiliser le fallback immédiatement
       console.warn(`OpenRouter API error: ${response.status} ${response.statusText}, using fallback`);
+      console.warn('This usually means the API key is invalid, expired, or has insufficient credits');
+
+      // Log additional debugging info
+      if (response.status === 401) {
+        console.warn('401 Unauthorized: Please check your OpenRouter API key in .env.local');
+        console.warn('You can get a new API key from: https://openrouter.ai/keys');
+      } else if (response.status === 429) {
+        console.warn('429 Rate Limited: Too many requests, please try again later');
+      } else if (response.status >= 500) {
+        console.warn('5xx Server Error: OpenRouter service may be temporarily unavailable');
+      }
+
       onProgress?.('Using smart fallback suggestions...', 70);
       await new Promise(resolve => setTimeout(resolve, 300));
       return getFallbackSuggestions(quizAnswers);

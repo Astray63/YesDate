@@ -99,24 +99,31 @@ export default function AuthNavigator() {
           cardStyle: { backgroundColor: theme.colors.backgroundLight },
         }}
       >
-        <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="Auth" component={AuthScreen} />
-        <Stack.Screen name="RoomScreen" component={RoomScreen} />
-        <Stack.Screen name="CityInput" component={CityInputScreen} />
-        <Stack.Screen name="Quiz" component={QuizScreen} />
-        <Stack.Screen name="SwipeDate" component={SwipeDateScreen} />
-        <Stack.Screen name="Match" component={MatchScreen} />
-        <Stack.Screen name="Main" component={MainTabNavigator} />
-        <Stack.Screen 
-          name="Gamification" 
-          component={GamificationScreen}
-          options={{ presentation: 'modal' }}
-        />
-        <Stack.Screen 
-          name="Community" 
-          component={CommunityScreen}
-          options={{ presentation: 'modal' }}
-        />
+        {user ? (
+          <>
+            <Stack.Screen name="CityInput" component={CityInputScreen} />
+            <Stack.Screen name="Quiz" component={QuizScreen} />
+            <Stack.Screen name="SwipeDate" component={SwipeDateScreen} />
+            <Stack.Screen name="Match" component={MatchScreen} />
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen
+              name="Gamification"
+              component={GamificationScreen}
+              options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen
+              name="Community"
+              component={CommunityScreen}
+              options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen name="RoomScreen" component={RoomScreen} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
+            <Stack.Screen name="Auth" component={AuthScreen} />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

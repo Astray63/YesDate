@@ -1,9 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, Heart, Lightbulb, Trophy, Search } from 'lucide-react-native';
+import { Heart, Lightbulb, Trophy, Search } from 'lucide-react-native';
 
 // Screens
-import WelcomeScreen from '../screens/WelcomeScreen';
 import SwipeDateScreen from '../screens/SwipeDateScreen';
 import MatchScreen from '../screens/MatchScreen';
 import CommunityScreen from '../screens/CommunityScreen';
@@ -15,7 +14,7 @@ const Tab = createBottomTabNavigator();
 
 export default function MainTabNavigator() {
   return (
-    <Tab.Navigator
+    <Tab.Navigator initialRouteName="SwipeDate"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -47,20 +46,6 @@ export default function MainTabNavigator() {
         },
       }}
     >
-      <Tab.Screen
-        name="Home"
-        component={WelcomeScreen}
-        options={{
-          tabBarLabel: 'Accueil',
-          tabBarIcon: ({ color, focused }) => (
-            <Home 
-              size={focused ? 22 : 18} 
-              color={color} 
-              strokeWidth={focused ? 2.5 : 2}
-            />
-          ),
-        }}
-      />
       <Tab.Screen
         name="SwipeDate"
         component={SwipeDateScreen}

@@ -6,7 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  Dimensions,
+  useWindowDimensions,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,8 +14,6 @@ import { theme } from '../utils/theme';
 import { NavigationProps } from '../types';
 import { getCommunityDates, getCommunityStats } from '../utils/data';
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.7;
 
 interface CommunityScreenProps extends NavigationProps {}
 
@@ -24,6 +22,12 @@ export default function CommunityScreen({ navigation }: CommunityScreenProps) {
   const [trendingDates, setTrendingDates] = useState<any[]>([]);
   const [communityStats, setCommunityStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Responsive measurements (recompute on rotation/resize)
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
+  const cardWidth = Math.max(260, Math.min(width * 0.8, 420));
+  const canGoBack = navigation.canGoBack();
 
   useEffect(() => {
     loadCommunityData();
@@ -53,10 +57,10 @@ export default function CommunityScreen({ navigation }: CommunityScreenProps) {
   };
 
   const renderDateCard = (date: any) => (
-    <View key={date.id} style={styles.dateCard}>
+    <View key={date.id} style={[styles.dateCard, { width: cardWidth }]}>
       <Image
         source={{ uri: date.image_url }}
-        style={styles.dateImage}
+        style={[styles.dateImage, { aspectRatio: isTablet ? 16 / 9 : 3 / 4 }]}
         resizeMode="cover"
       />
       <View style={styles.dateInfo}>
@@ -70,12 +74,16 @@ export default function CommunityScreen({ navigation }: CommunityScreenProps) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
+          {canGoBack ? (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backIcon}>←</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.placeholder} />
+          )}
           <Text style={styles.headerTitle}>Inspiration</Text>
           <View style={styles.placeholder} />
         </View>
@@ -90,12 +98,16 @@ export default function CommunityScreen({ navigation }: CommunityScreenProps) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
+        {canGoBack ? (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.placeholder} />
+        )}
         <Text style={styles.headerTitle}>Inspiration</Text>
         <View style={styles.placeholder} />
       </View>
@@ -215,7 +227,6 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   dateCard: {
-    width: CARD_WIDTH,
     backgroundColor: theme.colors.cardLight,
     borderRadius: theme.borderRadius.md,
     overflow: 'hidden',

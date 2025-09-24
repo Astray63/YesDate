@@ -16,6 +16,7 @@ import { theme } from '../utils/theme';
 import { NavigationProps, DateIdea } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
 import DateCardModal from '../components/DateCardModal';
+import EndOfSwipesOverlay from '../components/EndOfSwipesOverlay';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.9;
@@ -41,6 +42,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   const [loadingMessage, setLoadingMessage] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCard, setSelectedCard] = useState<DateIdea | null>(null);
+  const [endVisible, setEndVisible] = useState(false);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -59,6 +61,13 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   useEffect(() => {
     loadDateIdeas();
   }, []);
+
+  // Quand il n'y a pas de cartes après chargement, afficher l'overlay
+  useEffect(() => {
+    if (!loading && dates.length === 0) {
+      setEndVisible(true);
+    }
+  }, [loading, dates.length]);
 
   const loadDateIdeas = async () => {
     try {
@@ -106,7 +115,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
 
   const swipeCard = (direction: 'left' | 'right') => {
     const toValue = direction === 'right' ? screenWidth : -screenWidth;
-    
+
     Animated.parallel([
       Animated.timing(translateX, {
         toValue,
@@ -123,17 +132,16 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
         ...prev,
         [currentCard.id]: direction,
       }));
-      
-      if (isLastCard) {
-        // Navigate to matches screen with results and roomId
-        const matches = Object.entries(swipedCards)
-          .filter(([_, direction]) => direction === 'right')
-          .map(([cardId]) => dates.find(date => date.id === cardId))
-          .filter(Boolean);
-        
-        const roomId = route.params?.roomId;
-        navigation.navigate('Match', { matches, roomId });
+
+      // Check if there are more cards after this swipe
+      const hasMoreCards = currentCardIndex < dates.length - 1;
+
+      if (!hasMoreCards) {
+        // Fin du deck: afficher l'overlay de fin
+        setEndVisible(true);
+        return;
       } else {
+        // Move to next card
         setCurrentCardIndex(prev => prev + 1);
         translateX.setValue(0);
         translateY.setValue(0);
@@ -178,6 +186,10 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   };
 
   const onHandlerStateChange = (event: PanGestureHandlerGestureEvent) => {
+    if (endVisible) {
+      // empêcher le swipe quand l'overlay est visible
+      return;
+    }
     if (event.nativeEvent.state === State.END) {
       const { translationX, velocityX } = event.nativeEvent;
       
@@ -319,17 +331,29 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   }
 
   if (!currentCard) {
+    // Afficher l'overlay de fin lorsque plus aucune carte
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Plus de dates disponibles !</Text>
-          <TouchableOpacity
-            style={styles.restartButton}
-            onPress={() => navigation.navigate('Quiz')}
-          >
-            <Text style={styles.restartButtonText}>Recommencer le quiz</Text>
-          </TouchableOpacity>
-        </View>
+        <EndOfSwipesOverlay
+          visible={true}
+          onRetryQuiz={() => {
+            navigation.navigate('Quiz');
+            setEndVisible(false);
+          }}
+          onExpandFilters={() => {
+            // Exemple: ouvrir un panneau de filtres (à intégrer selon votre app)
+            console.log('Assouplir mes critères');
+          }}
+          onRefresh={() => loadDateIdeas()}
+          onEnableNotifications={() => console.log('Notifications activées')}
+          onOpenSettings={() => console.log('Ouverture des réglages')}
+          onExpandRadius={() => {
+            console.log('Étendre le rayon de recherche');
+            // Exemple minimal: relancer une recherche
+            loadDateIdeas();
+          }}
+          onClose={() => setEndVisible(false)}
+        />
       </SafeAreaView>
     );
   }
@@ -431,6 +455,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
 
         {/* Main card */}
         <PanGestureHandler
+          enabled={!endVisible}
           onGestureEvent={onGestureEvent}
           onHandlerStateChange={onHandlerStateChange}
         >
@@ -533,6 +558,26 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
         visible={modalVisible}
         onClose={handleModalClose}
         dateIdea={selectedCard}
+      />
+
+      {/* Overlay de fin de deck */}
+      <EndOfSwipesOverlay
+        visible={endVisible}
+        onRetryQuiz={() => {
+          navigation.navigate('Quiz');
+          setEndVisible(false);
+        }}
+        onExpandFilters={() => {
+          console.log('Assouplir mes critères');
+        }}
+        onRefresh={() => loadDateIdeas()}
+        onEnableNotifications={() => console.log('Notifications activées')}
+        onOpenSettings={() => console.log('Ouverture des réglages')}
+        onExpandRadius={() => {
+          console.log('Étendre le rayon de recherche');
+          loadDateIdeas();
+        }}
+        onClose={() => setEndVisible(false)}
       />
     </SafeAreaView>
   );
