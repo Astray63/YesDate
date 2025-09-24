@@ -11,7 +11,7 @@ app.use(express.json());
 // Routes
 app.use('/api/dates', generateDateIdeas);
 
-app.get('/health', (req, res) => {
+app.get('/health', (req: any, res: any) => {
   res.json({ status: 'OK', message: 'L\'API YesDate est en cours d\'exécution' });
 });
 

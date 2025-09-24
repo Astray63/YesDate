@@ -48,6 +48,8 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   const translateY = useRef(new Animated.Value(0)).current;
   const rotate = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(1)).current;
+  const cardOpacity = useRef(new Animated.Value(0)).current;
+  const cardTranslateY = useRef(new Animated.Value(50)).current;
 
   // Animation values for next card preview
   const nextCardTranslateX = useRef(new Animated.Value(0)).current;
@@ -61,6 +63,25 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   useEffect(() => {
     loadDateIdeas();
   }, []);
+
+  // Animation d'entrée pour les cartes
+  useEffect(() => {
+    if (dates.length > 0 && !loading) {
+      Animated.parallel([
+        Animated.timing(cardOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(cardTranslateY, {
+          toValue: 0,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [dates.length, loading]);
 
   // Quand il n'y a pas de cartes après chargement, afficher l'overlay
   useEffect(() => {
@@ -302,17 +323,16 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     return locationMap[locationType] || locationType;
   };
 
-  // Composant visuel sans image
+  // Composant visuel inspiré du design moderne
   const DateVisual = ({ card, style }: { card: DateIdea; style: any }) => {
     return (
-      <View style={[style, { position: 'relative', backgroundColor: getCategoryGradient(card.category) + '20' }]}>
-        {/* Motifs décoratifs */}
-        <View style={styles.imageOverlay}>
-          {getCategoryPattern(card.category)}
-        </View>
-        {/* Icône centrale de la catégorie */}
-        <View style={styles.centralIconContainer}>
-          <Text style={styles.centralIcon}>{getCategoryEmoji(card.category)}</Text>
+      <View style={[style, { position: 'relative' }]}>
+        {/* Fond avec dégradé inspiré de l'image */}
+        <View style={styles.gradientBackground} />
+
+        {/* Motifs décoratifs subtils */}
+        <View style={styles.patternOverlay}>
+          <Text style={styles.patternIcon}>{getCategoryEmoji(card.category)}</Text>
         </View>
       </View>
     );
@@ -390,62 +410,57 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
               },
             ]}
           >
-            {/* Modern Card Design for Preview */}
-            <View style={styles.cardInner}>
-              {/* Visual Section */}
+            {/* Nouveau design pour l'aperçu */}
+            <View style={styles.newCardDesign}>
+              {/* Section visuelle avec fond sombre */}
               <DateVisual card={nextCard} style={styles.imageSection} />
 
-              {/* Category Header */}
-              <View style={styles.categoryHeader}>
-                <View style={styles.categoryLeft}>
-                  <Text style={styles.categoryEmoji}>{getCategoryEmoji(nextCard.category)}</Text>
-                  <Text style={styles.categoryName}>{getCategoryLabel(nextCard.category)}</Text>
+              {/* Section d'informations en haut */}
+              <View style={styles.topInfoSection}>
+                <View style={styles.infoPill}>
+                  <Text style={styles.infoText}>📍 {nextCard.area || 'Paris'}</Text>
                 </View>
-                {nextCard.cost && (
-                  <View style={styles.costBadge}>
-                    <Text style={styles.costText}>{getCostLabel(nextCard.cost)}</Text>
-                  </View>
-                )}
+                <View style={styles.infoPill}>
+                  <Text style={styles.infoText}>📏 5 km</Text>
+                </View>
+                <View style={styles.infoPill}>
+                  <Text style={styles.infoText}>💰 {getCostLabel(nextCard.cost || 'moderate')}</Text>
+                </View>
               </View>
 
-              {/* Main Content Area */}
-              <View style={styles.mainContent}>
-                {/* Icon and Title */}
-                <View style={styles.iconTitleSection}>
-                  <View style={[styles.iconCircle, { backgroundColor: getCategoryGradient(nextCard.category) + '20' }]}>
-                    <Text style={styles.mainIcon}>{getCategoryEmoji(nextCard.category)}</Text>
+              {/* Section centrale avec titre */}
+              <View style={styles.centerContent}>
+                <Text style={styles.mainTitle}>{nextCard.title}</Text>
+
+                <View style={styles.indicatorsRow}>
+                  <View style={styles.yesdateIndicator}>
+                    <Text style={styles.yesdateText}>YESDATE</Text>
                   </View>
-                  <View style={styles.titleArea}>
-                    <Text style={styles.cardTitle}>{nextCard.title}</Text>
-                    <View style={styles.metaRow}>
-                      <Text style={styles.durationText}>⏱️ {nextCard.duration}</Text>
-                    </View>
+                  <View style={styles.moodIndicator}>
+                    <Text style={styles.moodText}>{getCategoryLabel(nextCard.category)}</Text>
                   </View>
                 </View>
+              </View>
 
-                {/* Description */}
-                <Text style={styles.description}>{nextCard.description}</Text>
+              {/* Grand indicateur LIKE sur le côté */}
+              <View style={styles.likeIndicator}>
+                <Text style={styles.likeText}>LIKE</Text>
+              </View>
 
-                {/* Details Section */}
-                <View style={styles.detailsSection}>
-                  {nextCard.area && (
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>📍</Text>
-                      <Text style={styles.detailText}>{nextCard.area}</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.tagsRow}>
-                    {nextCard.location_type && (
-                      <View style={styles.tag}>
-                        <Text style={styles.tagText}>{getLocationTypeLabel(nextCard.location_type)}</Text>
-                      </View>
-                    )}
-                    {nextCard.generated_by === 'ai' && (
-                      <View style={styles.aiTag}>
-                        <Text style={styles.aiTagText}>✨ IA</Text>
-                      </View>
-                    )}
+              {/* Section d'informations en bas */}
+              <View style={styles.bottomInfoSection}>
+                <View style={styles.bottomInfoRow}>
+                  <View style={styles.bottomInfoItem}>
+                    <Text style={styles.bottomInfoIcon}>📍</Text>
+                    <Text style={styles.bottomInfoText}>2,3 km</Text>
+                  </View>
+                  <View style={styles.bottomInfoItem}>
+                    <Text style={styles.bottomInfoIcon}>⏱️</Text>
+                    <Text style={styles.bottomInfoText}>{nextCard.duration}</Text>
+                  </View>
+                  <View style={styles.bottomInfoItem}>
+                    <Text style={styles.bottomInfoIcon}>💰</Text>
+                    <Text style={styles.bottomInfoText}>{getCostLabel(nextCard.cost || 'moderate')}</Text>
                   </View>
                 </View>
               </View>
@@ -453,7 +468,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
           </Animated.View>
         )}
 
-        {/* Main card */}
+        {/* Main card - Nouveau design inspiré de l'image */}
         <PanGestureHandler
           enabled={!endVisible}
           onGestureEvent={onGestureEvent}
@@ -465,69 +480,64 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
               {
                 transform: [
                   { translateX },
-                  { translateY },
+                  { translateY: Animated.add(translateY, cardTranslateY) },
                   { rotate: rotateInterpolate },
                   { scale },
                 ],
+                opacity: cardOpacity,
               },
             ]}
           >
-            {/* Modern Card Design */}
-            <Pressable style={styles.cardInner} onPress={handleCardPress}>
-              {/* Visual Section */}
+            <Pressable style={styles.newCardDesign} onPress={handleCardPress}>
+              {/* Section visuelle avec fond sombre */}
               <DateVisual card={currentCard} style={styles.imageSection} />
 
-              {/* Category Header */}
-              <View style={styles.categoryHeader}>
-                <View style={styles.categoryLeft}>
-                  <Text style={styles.categoryEmoji}>{getCategoryEmoji(currentCard.category)}</Text>
-                  <Text style={styles.categoryName}>{getCategoryLabel(currentCard.category)}</Text>
+              {/* Section d'informations en haut */}
+              <View style={styles.topInfoSection}>
+                <View style={styles.infoPill}>
+                  <Text style={styles.infoText}>📍 {currentCard.area || 'Paris'}</Text>
                 </View>
-                {currentCard.cost && (
-                  <View style={styles.costBadge}>
-                    <Text style={styles.costText}>{getCostLabel(currentCard.cost)}</Text>
-                  </View>
-                )}
+                <View style={styles.infoPill}>
+                  <Text style={styles.infoText}>📏 5 km</Text>
+                </View>
+                <View style={styles.infoPill}>
+                  <Text style={styles.infoText}>💰 {getCostLabel(currentCard.cost || 'moderate')}</Text>
+                </View>
               </View>
 
-              {/* Main Content Area */}
-              <View style={styles.mainContent}>
-                {/* Icon and Title */}
-                <View style={styles.iconTitleSection}>
-                  <View style={[styles.iconCircle, { backgroundColor: getCategoryGradient(currentCard.category) + '20' }]}>
-                    <Text style={styles.mainIcon}>{getCategoryEmoji(currentCard.category)}</Text>
+              {/* Section centrale avec titre */}
+              <View style={styles.centerContent}>
+                <Text style={styles.mainTitle}>{currentCard.title}</Text>
+
+                <View style={styles.indicatorsRow}>
+                  <View style={styles.yesdateIndicator}>
+                    <Text style={styles.yesdateText}>YESDATE</Text>
                   </View>
-                  <View style={styles.titleArea}>
-                    <Text style={styles.cardTitle}>{currentCard.title}</Text>
-                    <View style={styles.metaRow}>
-                      <Text style={styles.durationText}>⏱️ {currentCard.duration}</Text>
-                    </View>
+                  <View style={styles.moodIndicator}>
+                    <Text style={styles.moodText}>{getCategoryLabel(currentCard.category)}</Text>
                   </View>
                 </View>
+              </View>
 
-                {/* Description */}
-                <Text style={styles.description}>{currentCard.description}</Text>
+              {/* Grand indicateur LIKE sur le côté */}
+              <View style={styles.likeIndicator}>
+                <Text style={styles.likeText}>LIKE</Text>
+              </View>
 
-                {/* Details Section */}
-                <View style={styles.detailsSection}>
-                  {currentCard.area && (
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>📍</Text>
-                      <Text style={styles.detailText}>{currentCard.area}</Text>
-                    </View>
-                  )}
-                  
-                  <View style={styles.tagsRow}>
-                    {currentCard.location_type && (
-                      <View style={styles.tag}>
-                        <Text style={styles.tagText}>{getLocationTypeLabel(currentCard.location_type)}</Text>
-                      </View>
-                    )}
-                    {currentCard.generated_by === 'ai' && (
-                      <View style={styles.aiTag}>
-                        <Text style={styles.aiTagText}>✨ IA</Text>
-                      </View>
-                    )}
+              {/* Section d'informations en bas */}
+              <View style={styles.bottomInfoSection}>
+                <View style={styles.bottomInfoRow}>
+                  <View style={styles.bottomInfoItem}>
+                    <Text style={styles.bottomInfoIcon}>📍</Text>
+                    <Text style={styles.bottomInfoText}>2,3 km</Text>
+                  </View>
+                  <View style={styles.bottomInfoItem}>
+                    <Text style={styles.bottomInfoIcon}>⏱️</Text>
+                    <Text style={styles.bottomInfoText}>{currentCard.duration}</Text>
+                  </View>
+                  <View style={styles.bottomInfoItem}>
+                    <Text style={styles.bottomInfoIcon}>💰</Text>
+                    <Text style={styles.bottomInfoText}>{getCostLabel(currentCard.cost || 'moderate')}</Text>
                   </View>
                 </View>
               </View>
@@ -632,8 +642,11 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: theme.fonts.sizes['2xl'],
-    fontWeight: '700' as any,
-    color: theme.colors.textLight,
+    fontWeight: '800' as any,
+    color: '#1a1a1a',
+    lineHeight: 32,
+    marginBottom: 4,
+    letterSpacing: -0.5,
   },
   cardDescription: {
     fontSize: theme.fonts.sizes.md,
@@ -649,29 +662,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.lg,
     gap: 100,
     marginTop: theme.spacing.xl,
   },
   actionButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.md,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   rejectButton: {
-    backgroundColor: '#ffffff',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-  likeButton: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     width: 70,
     height: 70,
     borderRadius: 35,
+    borderWidth: 3,
+    borderColor: '#ff4757',
+    shadowColor: '#ff4757',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  likeButton: {
+    backgroundColor: theme.colors.primary,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 4,
+    borderColor: '#ffffff',
+    shadowColor: theme.colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
   },
   superLikeButton: {
     backgroundColor: '#ffffff',
@@ -680,11 +720,11 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   rejectIcon: {
-    fontSize: 28,
-    color: '#ff4458',
+    fontSize: 32,
+    color: '#ff4757',
   },
   likeIcon: {
-    fontSize: 28,
+    fontSize: 36,
     color: '#ffffff',
   },
   superLikeIcon: {
@@ -800,30 +840,46 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   tag: {
-    backgroundColor: theme.colors.backgroundLight,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.full,
     borderWidth: 1,
-    borderColor: theme.colors.borderLight,
+    borderColor: 'rgba(0, 0, 0, 0.12)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   tagText: {
-    fontSize: theme.fonts.sizes.xs,
-    fontWeight: '500' as any,
-    color: theme.colors.textLight,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '600' as any,
+    color: '#333333',
+    letterSpacing: 0.3,
   },
   aiTag: {
-    backgroundColor: theme.colors.primary + '20',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
+    backgroundColor: '#667eea',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '40',
+    shadowColor: '#667eea',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   aiTagText: {
-    fontSize: theme.fonts.sizes.xs,
-    fontWeight: '600' as any,
-    color: theme.colors.primary,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '700' as any,
+    color: '#ffffff',
+    letterSpacing: 0.5,
   },
   // New DA compliant styles without images
   categoryIconContainer: {
@@ -863,17 +919,26 @@ const styles = StyleSheet.create({
     borderTopRightRadius: theme.borderRadius.lg,
   },
   patternText: {
-    fontSize: 40,
-    lineHeight: 50,
+    fontSize: 60,
+    lineHeight: 70,
     textAlign: 'center',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
-  // Modern responsive card design
-  cardInner: {
+  // Nouveau design de carte inspiré de l'image
+  newCardDesign: {
     flex: 1,
-    backgroundColor: theme.colors.cardLight,
+    backgroundColor: theme.colors.backgroundDark,
     borderRadius: theme.borderRadius.lg,
     overflow: 'hidden',
+    position: 'relative',
+    shadowColor: theme.colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 12,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 12,
   },
   categoryHeader: {
     flexDirection: 'row',
@@ -881,9 +946,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.backgroundLight,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
+    borderBottomColor: 'rgba(0, 0, 0, 0.08)',
   },
   categoryLeft: {
     flexDirection: 'row',
@@ -891,71 +956,96 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   categoryEmoji: {
-    fontSize: 20,
+    fontSize: 24,
   },
   categoryName: {
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: '600' as any,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: '700' as any,
     color: theme.colors.textLight,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   mainContent: {
     flex: 1,
-    padding: theme.spacing.md,
+    padding: theme.spacing.lg,
     justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
   },
   iconTitleSection: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    alignItems: 'flex-start',
+    gap: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
   iconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   mainIcon: {
-    fontSize: 24,
+    fontSize: 28,
   },
   titleArea: {
     flex: 1,
+    justifyContent: 'center',
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: theme.spacing.xs,
+    gap: theme.spacing.sm,
   },
   durationText: {
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.mutedLight,
+    fontWeight: '600' as any,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.full,
   },
   description: {
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.textLight,
-    lineHeight: 22,
-    marginBottom: theme.spacing.md,
+    lineHeight: 24,
+    marginBottom: theme.spacing.lg,
+    fontWeight: '400' as any,
   },
   detailsSection: {
-    gap: theme.spacing.sm,
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    borderRadius: theme.borderRadius.md,
   },
   detailIcon: {
-    fontSize: 16,
+    fontSize: 18,
   },
   detailText: {
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.mutedLight,
+    fontWeight: '500' as any,
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
   },
   // Styles pour les images
   cardImage: {
@@ -964,6 +1054,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
+    borderTopLeftRadius: theme.borderRadius.lg,
+    borderTopRightRadius: theme.borderRadius.lg,
   },
   imageLoadingContainer: {
     position: 'absolute',
@@ -973,7 +1065,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.backgroundLight + '80',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   imageOverlay: {
     position: 'absolute',
@@ -983,13 +1075,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    opacity: 0.1,
+    opacity: 0.15,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   imageSection: {
-    height: CARD_HEIGHT * 0.4,
+    height: CARD_HEIGHT * 0.45,
     width: '100%',
     position: 'relative',
     overflow: 'hidden',
+    backgroundColor: '#f8fafc',
   },
   retryText: {
     color: theme.colors.primary,
@@ -997,21 +1091,170 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
     textAlign: 'center',
   },
-  // Styles pour l'icône centrale
-  centralIconContainer: {
+  // Nouveau design inspiré de l'image
+  gradientBackground: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -25 }, { translateY: -25 }],
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.backgroundDark,
+    borderRadius: theme.borderRadius.lg,
+  },
+  patternOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadows.lg,
+    opacity: 0.1,
   },
-  centralIcon: {
-    fontSize: 30,
+  patternIcon: {
+    fontSize: 120,
+    color: theme.colors.primary,
+  },
+  // Section d'informations en haut
+  topInfoSection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    padding: theme.spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  infoPill: {
+    backgroundColor: 'rgba(248, 246, 247, 0.15)',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(248, 246, 247, 0.2)',
+  },
+  infoText: {
+    color: theme.colors.textDark,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '600' as any,
+  },
+  // Section centrale avec titre
+  centerContent: {
+    position: 'absolute',
+    top: '40%',
+    left: 0,
+    right: 0,
+    paddingHorizontal: theme.spacing.xl,
+    alignItems: 'center',
+    transform: [{ translateY: -50 }],
+  },
+  mainTitle: {
+    fontSize: 42,
+    fontWeight: '800' as any,
+    color: theme.colors.textDark,
+    textAlign: 'center',
+    lineHeight: 48,
+    marginBottom: theme.spacing.lg,
+  },
+  // Indicateurs YESDATE et ambiance
+  indicatorsRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  yesdateIndicator: {
+    backgroundColor: 'rgba(248, 246, 247, 0.2)',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(248, 246, 247, 0.3)',
+  },
+  yesdateText: {
+    color: theme.colors.textDark,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '700' as any,
+    letterSpacing: 1,
+  },
+  moodIndicator: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
+    shadowColor: theme.colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  moodText: {
+    color: theme.colors.textDark,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '700' as any,
+    letterSpacing: 1,
+  },
+  // Grand indicateur LIKE sur le côté
+  likeIndicator: {
+    position: 'absolute',
+    right: -25,
+    top: '50%',
+    transform: [{ translateY: -50 }, { rotate: '15deg' }],
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
+    borderRadius: theme.borderRadius.full,
+    shadowColor: theme.colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
+    zIndex: 20,
+    borderWidth: 3,
+    borderColor: '#ffffff',
+  },
+  likeText: {
+    fontSize: 24,
+    fontWeight: '900' as any,
+    color: theme.colors.textDark,
+    letterSpacing: 2,
+  },
+  // Section d'informations en bas
+  bottomInfoSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: theme.spacing.xl,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(34, 16, 25, 0.8)',
+  },
+  bottomInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.lg,
+  },
+  bottomInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  bottomInfoIcon: {
+    fontSize: 18,
+    color: theme.colors.textDark,
+  },
+  bottomInfoText: {
+    color: theme.colors.textDark,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: '600' as any,
   },
 });

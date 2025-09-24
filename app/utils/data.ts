@@ -370,6 +370,39 @@ export const generateAIDateSuggestions = async (
     // Étape 4: Appel à l'API IA
     onProgress?.('Generating AI suggestions...', 60);
 
+    // Log debug pour tracer le prompt envoyé à l'IA
+    console.log('=== DEBUG: Prompt sent to Gemma 3 27B ===');
+    console.log('System prompt:', `Tu es YesDate AI, expert en création de rendez-vous personnalisés.
+
+RÈGLE LA PLUS IMPORTANTE : L'AMBIANCE EST PRIMORDIALE
+- Si l'utilisateur demande "romantic" → TOUTES les suggestions DOIVENT être de catégorie "romantic"
+- Si l'utilisateur demande "relaxed" → TOUTES les suggestions DOIVENT être de catégorie "relaxed"
+- Si l'utilisateur demande "fun" → TOUTES les suggestions DOIVENT être de catégorie "fun"
+- Si l'utilisateur demande "adventurous" → TOUTES les suggestions DOIVENT être de catégorie "adventurous"
+
+RÈGLES DE BUDGET À RESPECTER STRICTEMENT :
+- low : Activités gratuites ou < 20€
+- moderate : Activités entre 20€ et 100€
+- high : Activités entre 100€ et 300€
+- luxury : Activités > 300€
+
+FORMAT JSON OBLIGATOIRE - RESPECTE EXACTEMENT :
+{
+  "suggestions": [
+    {
+      "title": "Titre accrocheur",
+      "description": "Description qui respecte l'ambiance demandée",
+      "duration": "2h",
+      "category": "romantic|fun|relaxed|adventurous",
+      "cost": "low|moderate|high|luxury",
+      "location_type": "indoor|outdoor|city|countryside"
+    }
+  ]
+}`);
+    console.log('User prompt:', prompt);
+    console.log('Quiz answers:', quizAnswers);
+    console.log('=== END DEBUG ===');
+
     // Appeler l'API OpenRouter avec Gemma 3 27B
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -384,32 +417,31 @@ export const generateAIDateSuggestions = async (
         messages: [
           {
             role: 'system',
-            content: `Tu es YesDate AI, expert en création de rendez-vous personnalisés pour couples. Ta mission est de générer 5 suggestions de rendez-vous en respectant STRICTEMENT toutes les préférences de l'utilisateur.
+            content: `Tu es YesDate AI, expert en création de rendez-vous personnalisés.
 
-RÈGLES IMPÉRATIVES À RESPECTER :
-1. BUDGET : Respecte obligatoirement le niveau de budget spécifié (low, moderate, high, luxury)
-2. AMBIANCE : Adapte le ton et le style à l'ambiance demandée (romantic, fun, relaxed, adventurous)
-3. ACTIVITÉ : Propose des activités correspondant au type préféré (food, nature, culture, sport)
-4. LIEU : Respecte la préférence de lieu (indoor, outdoor, city, countryside)
-5. DURÉE : Adapte la suggestion à la durée disponible (short, medium, long, weekend)
+RÈGLE LA PLUS IMPORTANTE : L'AMBIANCE EST PRIMORDIALE
+- Si l'utilisateur demande "romantic" → TOUTES les suggestions DOIVENT être de catégorie "romantic"
+- Si l'utilisateur demande "relaxed" → TOUTES les suggestions DOIVENT être de catégorie "relaxed"
+- Si l'utilisateur demande "fun" → TOUTES les suggestions DOIVENT être de catégorie "fun"
+- Si l'utilisateur demande "adventurous" → TOUTES les suggestions DOIVENT être de catégorie "adventurous"
 
-CONTRAINTES BUDGÉTAIRES :
-- low : Activités gratuites ou très économiques (pique-nique, promenade, parc gratuit)
-- moderate : Restaurants abordables, activités moyennement coûteuses (cinéma, café, musée)
-- high : Restaurants gastronomiques, activités premium (spa, dîner raffiné, spectacle)
-- luxury : Expériences haut de gamme (restaurant étoilé, hélicoptère, yacht privé)
+RÈGLES DE BUDGET À RESPECTER STRICTEMENT :
+- low : Activités gratuites ou < 20€
+- moderate : Activités entre 20€ et 100€
+- high : Activités entre 100€ et 300€
+- luxury : Activités > 300€
 
-FORMAT DE RÉPONSE JSON OBLIGATOIRE :
+FORMAT JSON OBLIGATOIRE - RESPECTE EXACTEMENT :
 {
-  "suggestions": [
-    {
-      "title": "Titre accrocheur",
-      "description": "Description détaillée qui mentionne explicitement le budget et les contraintes",
-      "duration": "2h",
-      "category": "romantic",
-      "cost": "moderate",
-      "location_type": "city"
-    }
+"suggestions": [
+  {
+    "title": "Titre accrocheur",
+    "description": "Description qui respecte l'ambiance demandée",
+    "duration": "2h",
+    "category": "romantic|fun|relaxed|adventurous",
+    "cost": "low|moderate|high|luxury",
+    "location_type": "indoor|outdoor|city|countryside"
+  }
 ]
 }`
           },
@@ -418,7 +450,7 @@ FORMAT DE RÉPONSE JSON OBLIGATOIRE :
             content: prompt
           }
         ],
-        temperature: 0.3,
+        temperature: 0.1,
         max_tokens: 1500,
         response_format: { type: 'json_object' }
       })
@@ -447,7 +479,13 @@ FORMAT DE RÉPONSE JSON OBLIGATOIRE :
     // Étape 5: Traitement de la réponse
     onProgress?.('Processing AI response...', 80);
     const data = await response.json();
-    
+
+    // Log debug pour la réponse brute de l'IA
+    console.log('=== DEBUG: Raw AI Response ===');
+    console.log('Full response:', JSON.stringify(data, null, 2));
+    console.log('Message content:', data.choices?.[0]?.message?.content);
+    console.log('=== END DEBUG ===');
+
     // Vérifier si la réponse contient les données attendues
     if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
       console.warn('Invalid AI response structure:', data);
@@ -455,11 +493,35 @@ FORMAT DE RÉPONSE JSON OBLIGATOIRE :
       await new Promise(resolve => setTimeout(resolve, 300));
       return getFallbackSuggestions(quizAnswers);
     }
-    
+
     // Essayer de parser la réponse JSON
     let aiResponse;
     try {
       aiResponse = JSON.parse(data.choices[0].message.content);
+
+      // Log debug pour la réponse parsée
+      console.log('=== DEBUG: Parsed AI Response ===');
+      console.log('Parsed response:', JSON.stringify(aiResponse, null, 2));
+
+      // Vérifier si l'ambiance est respectée
+      const requestedMood = quizAnswers.mood;
+      const suggestions = aiResponse.suggestions || [];
+      const moodMatches = suggestions.filter((s: any) => s.category === requestedMood).length;
+      const totalSuggestions = suggestions.length;
+
+      console.log(`=== DEBUG: Mood Compliance Check ===`);
+      console.log(`Requested mood: ${requestedMood}`);
+      console.log(`Suggestions with matching mood: ${moodMatches}/${totalSuggestions}`);
+      console.log(`Compliance rate: ${totalSuggestions > 0 ? Math.round((moodMatches/totalSuggestions)*100) : 0}%`);
+
+      if (moodMatches !== totalSuggestions) {
+        console.warn(`⚠️ WARNING: AI did not respect the requested mood! Expected all ${totalSuggestions} suggestions to have category "${requestedMood}"`);
+        console.warn('This indicates the prompt needs to be more strict about mood enforcement');
+      } else {
+        console.log(`✅ SUCCESS: AI correctly respected the requested mood in all suggestions`);
+      }
+      console.log('=== END DEBUG ===');
+
     } catch (parseError) {
       console.warn('Failed to parse AI response:', data.choices[0].message.content);
       console.warn('Parse error:', parseError);

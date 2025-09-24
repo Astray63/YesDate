@@ -1,89 +1,84 @@
 import { Router } from 'express';
+import { geocodeCity, fetchPlacesByRadius, fetchPlaceDetails } from '../services/opentripmap';
+import { generateDateIdeasWithAI } from '../services/openrouter';
 
 const router = Router();
 
 interface QuizAnswers {
   mood?: string;
   activity_type?: string;
-  location?: string;
+  location?: string; // city name
   budget?: string;
   duration?: string;
+  preferences?: any;
 }
 
-// Generate date ideas based on quiz answers
+// Minimal /generate implementation using the new services
 router.post('/generate', async (req: any, res: any) => {
   try {
-    const { quizAnswers }: { quizAnswers: QuizAnswers } = req.body;
+    const quizAnswers: QuizAnswers = req.body?.quizAnswers || {};
+    const city = quizAnswers.location || 'Paris';
 
-    // Mock OpenRouter API call
-    // In real implementation, you would call OpenRouter API here
-    const generatedDates = await mockGenerateDatesWithAI(quizAnswers);
+    // geocode + fetch places
+    let places: any[] = [];
+    try {
+      const { lat, lon } = await geocodeCity(city);
+      const list = await fetchPlacesByRadius(lat, lon, 8000, 30);
+      places = Array.isArray(list) ? list : [];
+    } catch (_) {
+      places = [];
+    }
 
-    res.json({
-      success: true,
-      dates: generatedDates,
-    });
-  } catch (error) {
-    console.error('Erreur lors de la génération des rendez-vous :', error);
-    res.status(500).json({
-      success: false,
-      error: 'Échec de la génération des idées de rendez-vous',
-    });
+    // call AI
+    let suggestions: any[] = [];
+    try {
+      suggestions = await generateDateIdeasWithAI(places, quizAnswers);
+    } catch (_) {
+      suggestions = [{ id: 'mock-1', title: 'Promenade', description: 'Balade agréable', generated_by: 'mock' }];
+    }
+
+    // validate places
+    for (const s of suggestions) {
+      if (s?.eventSourceId) {
+        try {
+          s._place = await fetchPlaceDetails(s.eventSourceId);
+          s._validated = true;
+        } catch (_) {
+          s._validated = false;
+        }
+      }
+    }
+
+    // Post-process: enforce mood -> allowed categories mapping
+    const mood: string | undefined = (quizAnswers as any).mood;
+    const moodMap: Record<string, string[]> = {
+      'ambiance detendu': ['relax', 'food', 'culture'],
+      'detendu': ['relax', 'food', 'culture'],
+      'romantique': ['romantic', 'food', 'relax'],
+      'romantic': ['romantic', 'food', 'relax'],
+      'aventure': ['active', 'outdoor', 'surprise'],
+      'calme': ['relax', 'culture'],
+    };
+
+    let filtered = suggestions;
+    let relaxed: any[] = [];
+    if (mood) {
+      const key = String(mood).toLowerCase();
+      const allowed = moodMap[key];
+      if (allowed && allowed.length > 0) {
+        filtered = [];
+        for (const s of suggestions) {
+          const cat = (s.category || '').toString().toLowerCase();
+          if (allowed.includes(cat)) filtered.push(s);
+          else relaxed.push(s);
+        }
+      }
+    }
+
+    return res.json({ success: true, dates: filtered, relaxed_suggestions: relaxed });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: 'server error' });
   }
 });
-
-// Mock AI generation function
-async function mockGenerateDatesWithAI(answers: QuizAnswers) {
-  // This would be replaced with actual OpenRouter API call
-  const baseDates = [
-    {
-      id: `generated-${Date.now()}-1`,
-      title: 'Pique-nique romantique sous les étoiles',
-      description: 'En fonction de votre humeur et de vos préférences, profitez d\'une soirée conviviale en plein air avec vos collations et boissons préférées tout en observant les étoiles ensemble.',
-      image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA-EMaMd5j7PMY-Kbk9YYHP8YhaR54UeJC2Kwz_wYOm6J6eYR_KRE2CBdQLIX7G0iAYoZE_g81HGh_I--AaPvGDN92j1oqE3onoCZrg9IdD5Ybogq3sIIteqXwOwOL7gkcQV7QyBvOAWHK8u_2cHATbCnYYT82b4a_w16TSoZ8zcoMPfvf9e8OGIhqjoK8pS5E_6h-PQMV4ujI2CZkjk9VRi7sY0HrkTfBTRgTS4MKnsLNfxn9hQvF46ZPZk6z-QpKS6AzQAL2kUHA',
-      duration: answers.duration === 'short' ? '30 min' : answers.duration === 'medium' ? '2 hours' : '4 hours',
-      category: answers.activity_type || 'romantic',
-      cost: answers.budget || 'budget',
-      location_type: answers.location || 'nature',
-      generated_by: 'ai' as const,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: `generated-${Date.now()}-2`,
-      title: 'Aventure culinaire ensemble',
-      description: 'Parfait pour votre humeur actuelle ! Essayez de cuisiner une nouvelle cuisine ensemble et découvrez des saveurs du monde entier.',
-      image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD2jwZA2c7GEjxuI2k6arLDI2uTmyLOEJOs45x8urdXDGZct1VDSplhr4aabykYsM2iuDzuLvGh2BUK52_34RWBIrNmHUdost7Spkc9QwvHDZ9-lKMnUeI3dJkbwrry0YBwfhL51qwimM77hO8VsDrLkR8c3KSCVpx6F1XSmp8heegUJ4tuzr_E5dkmslfBgW5xnwRGW3_AsTIFGVi_gsLNZqrSdzJ8UGFEg4qq4Z2dQA8nLuDC8_eldalaNFWvcAK_4e9AsuWHQGo',
-      duration: answers.duration === 'short' ? '1 hour' : '3 hours',
-      category: 'food',
-      cost: answers.budget || 'moderate',
-      location_type: 'home',
-      generated_by: 'ai' as const,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: `generated-${Date.now()}-3`,
-      title: 'Randonnée aventureuse',
-      description: 'Faites battre vos cœurs avec une randonnée pittoresque ! Parfait pour explorer la nature et créer des souvenirs inoubliables ensemble.',
-      image_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDrVjawXYkbqoAn8QmrZC_xeU8q4zCRnSBz77JYfNgOzvKgI5mjulo28DsgyELWJ-pD19kds_Tl8WKxSrTt8qAQdR5B4iJz5l76RFPbLUuVd-DWsD2O31C4ykg2dzjWIiAf2NvSXzhmt-qcHDM_VivBzyN1TOd4gEF7MOWCQHrlaf2epJxH5dFF-0LaWm-Q4OnPv_okjG1v3O4Np_81YeILiOKFTZfEoIs6mnRb2zj_DiN5Em5TUnQuZ9JcdT90IOgclvSsQP2IaW0',
-      duration: answers.duration === 'short' ? '2 hours' : '5 hours',
-      category: 'adventure',
-      cost: 'free',
-      location_type: 'nature',
-      generated_by: 'ai' as const,
-      created_at: new Date().toISOString(),
-    },
-  ];
-
-  // Filter and customize based on answers
-  return baseDates.filter(date => {
-    if (answers.location && date.location_type !== answers.location && answers.location !== 'anywhere') {
-      return false;
-    }
-    if (answers.activity_type && date.category !== answers.activity_type) {
-      return false;
-    }
-    return true;
-  });
-}
 
 export { router as generateDateIdeas };
