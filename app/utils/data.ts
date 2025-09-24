@@ -329,7 +329,7 @@ export const generateAIDateSuggestions = async (
     // Étape 1: Analyse des préférences
     onProgress?.('Analyzing your preferences...', 10);
 
-    // Récupérer la clé API OpenRouter depuis les variables d'environnement
+    // Récupérer la clé API OpenRouter depuis les variables d'environnement Expo
     const openRouterApiKey = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY;
 
     if (!openRouterApiKey) {
@@ -367,15 +367,42 @@ export const generateAIDateSuggestions = async (
         messages: [
           {
             role: 'system',
-            content: 'Tu es un expert en dating et en organisation de rendez-vous romantiques. Ta mission est de générer des suggestions de dates personnalisées basées sur les préférences des utilisateurs. Sois créatif, romantique et propose des idées réalistes et mémorables.'
+            content: `Tu es YesDate AI, expert en création de rendez-vous personnalisés pour couples. Ta mission est de générer 5 suggestions de rendez-vous en respectant STRICTEMENT toutes les préférences de l'utilisateur.
+
+RÈGLES IMPÉRATIVES À RESPECTER :
+1. BUDGET : Respecte obligatoirement le niveau de budget spécifié (low, moderate, high, luxury)
+2. AMBIANCE : Adapte le ton et le style à l'ambiance demandée (romantic, fun, relaxed, adventurous)
+3. ACTIVITÉ : Propose des activités correspondant au type préféré (food, nature, culture, sport)
+4. LIEU : Respecte la préférence de lieu (indoor, outdoor, city, countryside)
+5. DURÉE : Adapte la suggestion à la durée disponible (short, medium, long, weekend)
+
+CONTRAINTES BUDGÉTAIRES :
+- low : Activités gratuites ou très économiques (pique-nique, promenade, parc gratuit)
+- moderate : Restaurants abordables, activités moyennement coûteuses (cinéma, café, musée)
+- high : Restaurants gastronomiques, activités premium (spa, dîner raffiné, spectacle)
+- luxury : Expériences haut de gamme (restaurant étoilé, hélicoptère, yacht privé)
+
+FORMAT DE RÉPONSE JSON OBLIGATOIRE :
+{
+  "suggestions": [
+    {
+      "title": "Titre accrocheur",
+      "description": "Description détaillée qui mentionne explicitement le budget et les contraintes",
+      "duration": "2h",
+      "category": "romantic",
+      "cost": "moderate",
+      "location_type": "city"
+    }
+]
+}`
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.8,
-        max_tokens: 2000,
+        temperature: 0.3,
+        max_tokens: 1500,
         response_format: { type: 'json_object' }
       })
     });
@@ -391,7 +418,26 @@ export const generateAIDateSuggestions = async (
     // Étape 5: Traitement de la réponse
     onProgress?.('Processing AI response...', 80);
     const data = await response.json();
-    const aiResponse = JSON.parse(data.choices[0].message.content);
+    
+    // Vérifier si la réponse contient les données attendues
+    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+      console.warn('Invalid AI response structure:', data);
+      onProgress?.('Using fallback due to invalid response...', 70);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return getFallbackSuggestions(quizAnswers);
+    }
+    
+    // Essayer de parser la réponse JSON
+    let aiResponse;
+    try {
+      aiResponse = JSON.parse(data.choices[0].message.content);
+    } catch (parseError) {
+      console.warn('Failed to parse AI response:', data.choices[0].message.content);
+      console.warn('Parse error:', parseError);
+      onProgress?.('Using fallback due to invalid JSON...', 70);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return getFallbackSuggestions(quizAnswers);
+    }
 
     // Étape 6: Finalisation
     onProgress?.('Finalizing recommendations...', 90);
