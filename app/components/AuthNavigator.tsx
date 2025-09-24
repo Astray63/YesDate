@@ -17,7 +17,7 @@ import AuthScreen from '../screens/AuthScreen';
 import RoomScreen from '../screens/RoomScreen';
 import CityInputScreen from '../screens/CityInputScreen';
 import QuizScreen from '../screens/QuizScreen';
-import SwipeDateScreen from '../screens/SwipeDateScreen';
+import DatesScreen from '../screens/DatesScreen';
 import MatchScreen from '../screens/MatchScreen';
 import GamificationScreen from '../screens/GamificationScreen';
 import CommunityScreen from '../screens/CommunityScreen';
@@ -103,7 +103,7 @@ export default function AuthNavigator() {
           <>
             <Stack.Screen name="CityInput" component={CityInputScreen} />
             <Stack.Screen name="Quiz" component={QuizScreen} />
-            <Stack.Screen name="SwipeDate" component={SwipeDateScreen} />
+            <Stack.Screen name="SwipeDate" component={DatesScreen} />
             <Stack.Screen name="Match" component={MatchScreen} />
             <Stack.Screen name="Main" component={MainTabNavigator} />
             <Stack.Screen
