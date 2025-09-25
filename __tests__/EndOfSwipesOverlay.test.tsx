@@ -37,11 +37,7 @@ function renderOverlay(props?: Partial<EndOfSwipesOverlayProps>) {
   const defaultProps: EndOfSwipesOverlayProps = {
     visible: true,
     onRetryQuiz: jest.fn(),
-    onExpandFilters: jest.fn(),
-    onRefresh: jest.fn(),
-    onEnableNotifications: jest.fn(),
-    onOpenSettings: jest.fn(),
-    onExpandRadius: jest.fn(),
+    onViewMatches: jest.fn(),
     onClose: jest.fn(),
   };
   return render(<EndOfSwipesOverlay {...defaultProps} {...props} />);
@@ -62,8 +58,8 @@ describe('EndOfSwipesOverlay', () => {
     expect(screen.getByTestId('btnRetryQuiz')).toBeTruthy();
 
     // Secondary CTAs
-    expect(screen.getByTestId('btnExpandFilters')).toBeTruthy();
-    expect(screen.getByTestId('btnRefresh')).toBeTruthy();
+    expect(screen.getByTestId('btnViewMatches')).toBeTruthy();
+    expect(screen.getByTestId('btnClose')).toBeTruthy();
   });
 
   test('invokes onRetryQuiz and onClose when primary CTA pressed', async () => {
@@ -76,26 +72,14 @@ describe('EndOfSwipesOverlay', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
-  test('invokes onExpandFilters when pressed', async () => {
-    const onExpandFilters = jest.fn();
-    renderOverlay({ onExpandFilters });
+  test('invokes onViewMatches when pressed', async () => {
+    const onViewMatches = jest.fn();
+    const onClose = jest.fn();
+    renderOverlay({ onViewMatches, onClose });
 
-    fireEvent.press(screen.getByTestId('btnExpandFilters'));
-    expect(onExpandFilters).toHaveBeenCalledTimes(1);
-  });
-
-  test('invokes onRefresh and shows brief loading state', async () => {
-    const onRefresh = jest.fn(async () => {});
-    renderOverlay({ onRefresh });
-
-    fireEvent.press(screen.getByTestId('btnRefresh'));
-    expect(onRefresh).toHaveBeenCalledTimes(1);
-
-    // Loading label may appear briefly; ensure eventual completion
-    await waitFor(() => {
-      // Either the loading text shows briefly or not; verify at least no crash
-      expect(screen.getByTestId('btnRefresh')).toBeTruthy();
-    });
+    fireEvent.press(screen.getByTestId('btnViewMatches'));
+    await waitFor(() => expect(onViewMatches).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
   test('renders offline variant subtitle when isOfflineOverride is true', async () => {
@@ -106,25 +90,20 @@ describe('EndOfSwipesOverlay', () => {
     ).toBeTruthy();
   });
 
-  test('renders location disabled variant when locationDeniedOverride is true and onOpenSettings provided', async () => {
+  test('renders location disabled variant when locationDeniedOverride is true', async () => {
     renderOverlay({ locationDeniedOverride: true });
 
     expect(
       screen.getByText('Activez votre localisation pour trouver des profils près de vous.')
     ).toBeTruthy();
-
-    const btn = await screen.findByTestId('btnOpenSettings');
-    expect(btn).toBeTruthy();
   });
 
-  test('renders filters-too-strict variant when onExpandRadius provided', async () => {
-    renderOverlay({ onExpandRadius: jest.fn() });
+  test('renders location disabled variant when locationDeniedOverride is true', async () => {
+    renderOverlay({ locationDeniedOverride: true });
 
     expect(
-      screen.getByText('Vos critères sont très sélectifs. Essayez d’élargir pour voir plus de profils.')
+      screen.getByText('Activez votre localisation pour trouver des profils près de vous.')
     ).toBeTruthy();
-
-    expect(screen.getByTestId('btnExpandRadius')).toBeTruthy();
   });
 
   test('close button calls onClose', async () => {
