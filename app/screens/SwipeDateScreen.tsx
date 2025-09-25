@@ -324,6 +324,11 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     return gradientMap[category] || '#f04299';
   };
 
+  // Fonction helper pour récupérer la police selon le mood
+  const getMoodFontFamily = (category: string): string => {
+    return theme.fonts.moodFonts[category] || theme.fonts.display;
+  };
+
   // Softer, modern gradients used for card backgrounds
   const getCategoryGradientColors = (category: string): [string, string] => {
     const map: { [key: string]: [string, string] } = {
@@ -413,7 +418,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
         </TouchableOpacity>
       </View>
 
-      {/* Cards Container */}
+      {/* Cards Container - Now takes remaining space above buttons */}
       <View
         style={styles.cardsContainer}
         onLayout={(e) => {
@@ -452,8 +457,16 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
               </View>
 
               <View style={styles.centerBlock}>
-                <Text style={styles.titleText}>{nextCard.title}</Text>
-                <Text style={styles.subtitleText} numberOfLines={3}>
+                <Text style={[
+                  styles.titleText,
+                  { fontFamily: getMoodFontFamily(nextCard.category) }
+                ]}>
+                  {nextCard.title}
+                </Text>
+                <Text style={[
+                  styles.subtitleText,
+                  { fontFamily: getMoodFontFamily(nextCard.category) }
+                ]} numberOfLines={3}>
                   {nextCard.description}
                 </Text>
               </View>
@@ -510,8 +523,16 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
                 </View>
 
                 <View style={styles.centerBlock}>
-                  <Text style={styles.titleText}>{currentCard.title}</Text>
-                  <Text style={styles.subtitleText} numberOfLines={3}>
+                  <Text style={[
+                    styles.titleText,
+                    { fontFamily: getMoodFontFamily(currentCard.category) }
+                  ]}>
+                    {currentCard.title}
+                  </Text>
+                  <Text style={[
+                    styles.subtitleText,
+                    { fontFamily: getMoodFontFamily(currentCard.category) }
+                  ]} numberOfLines={3}>
                     {currentCard.description}
                   </Text>
                 </View>
@@ -533,7 +554,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
         </PanGestureHandler>
       </View>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - Now positioned at bottom of screen */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity
           style={[styles.actionButton, styles.rejectButton]}
@@ -608,6 +629,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     paddingHorizontal: theme.spacing.md,
+    paddingBottom: 140, // Reserve space for the fixed action buttons at bottom
   },
   card: {
     width: CARD_WIDTH,
@@ -646,8 +668,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing['2xl'],
     gap: 80,
-    marginTop: theme.spacing.md,
   },
   actionButton: {
     width: 70,

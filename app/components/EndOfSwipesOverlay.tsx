@@ -606,24 +606,6 @@ const EndOfSwipesOverlay = memo(function EndOfSwipesOverlay({
                 </TouchableOpacity>
               </Animated.View>
 
-              <TouchableOpacity
-                testID="btnClose"
-                accessibilityLabel="Fermer"
-                onPress={handleClose}
-                style={[
-                  styles.tertiaryButton,
-                  {
-                    backgroundColor: theme.isDark
-                      ? 'rgba(255,255,255,0.05)'
-                      : 'rgba(0,0,0,0.05)',
-                  },
-                ]}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.tertiaryButtonText, { color: theme.colors.muted }]}>
-                  Fermer
-                </Text>
-              </TouchableOpacity>
             </View>
           </BlurView>
         </Animated.View>
@@ -828,20 +810,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  // Bouton tertiaire
-  tertiaryButton: {
-    alignSelf: 'center',
-    marginTop: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 20,
-  },
-
-  tertiaryButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    opacity: 0.8,
-  },
 });
 
 export default EndOfSwipesOverlay;
