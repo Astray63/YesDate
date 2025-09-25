@@ -1,6 +1,22 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.achievements (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  title character varying NOT NULL,
+  description text,
+  image_url character varying,
+  points integer DEFAULT 0 CHECK (points >= 0),
+  user_id uuid,
+  is_public boolean DEFAULT true,
+  category character varying DEFAULT 'general'::character varying,
+  progress integer DEFAULT 0,
+  max_progress integer DEFAULT 100,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT achievements_pkey PRIMARY KEY (id),
+  CONSTRAINT achievements_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
 CREATE TABLE public.matches (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   room_id uuid NOT NULL,
@@ -37,8 +53,8 @@ CREATE TABLE public.rooms (
   status character varying DEFAULT 'waiting'::character varying CHECK (status::text = ANY (ARRAY['waiting'::character varying, 'active'::character varying, 'completed'::character varying]::text[])),
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT rooms_pkey PRIMARY KEY (id),
-  CONSTRAINT rooms_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.users(id),
-  CONSTRAINT rooms_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.users(id)
+  CONSTRAINT rooms_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES auth.users(id),
+  CONSTRAINT rooms_member_id_fkey FOREIGN KEY (member_id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.swipes (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -57,23 +73,4 @@ CREATE TABLE public.users (
   full_name character varying,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT users_pkey PRIMARY KEY (id)
-);
-
-CREATE TABLE public.achievements (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  title character varying NOT NULL,
-  description text,
-  image_url character varying,
-  points integer DEFAULT 0,
-  user_id uuid,
-  is_public boolean DEFAULT true,
-  category character varying DEFAULT 'general',
-  progress integer DEFAULT 0,
-  max_progress integer DEFAULT 100,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT achievements_pkey PRIMARY KEY (id),
-  CONSTRAINT achievements_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT achievements_progress_check CHECK (progress >= 0 AND progress <= max_progress),
-  CONSTRAINT achievements_points_check CHECK (points >= 0)
 );

@@ -124,10 +124,10 @@ export type RootStackParamList = {
   Auth: undefined;
   CityInput: undefined;
   ModeChoice: { city?: string };
-  Quiz: { city?: string; isCoupleMode?: boolean };
+  Quiz: { city?: string; isCoupleMode?: boolean; roomId?: string; roomCode?: string; isRoomCreator?: boolean; isRoomMember?: boolean };
   SwipeDate: { quizAnswers: { [key: string]: string }; city?: string; roomId?: string; isCoupleMode?: boolean };
   Match: { matches: any[] };
-  Room: { roomId: string };
+  Room: { roomId?: string; city?: string };
   MainTab: undefined;
   Community: undefined;
   Gamification: undefined;

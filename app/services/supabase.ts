@@ -165,18 +165,50 @@ export const authService = {
 
   // Save quiz responses
   async saveQuizResponses(roomId: string, userId: string, answers: any) {
-    const { data, error } = await supabase
-      .from('quiz_responses')
-      .upsert({
-        room_id: roomId,
-        user_id: userId,
-        answers: answers
-      })
-      .select()
-      .single();
+    try {
+      // First check if user exists in profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (profileError && profileError.code === 'PGRST116') {
+        // User doesn't exist in profiles, create the profile first
+        const currentUser = await this.getCurrentUser();
+        if (currentUser) {
+          const { error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              full_name: currentUser.user_metadata?.full_name || 'Utilisateur',
+              avatar_url: currentUser.user_metadata?.avatar_url || null,
+              updated_at: new Date().toISOString()
+            });
+
+          if (createError) {
+            console.error('Error creating user profile:', createError);
+          }
+        }
+      }
+
+      // Now save the quiz response
+      const { data, error } = await supabase
+        .from('quiz_responses')
+        .upsert({
+          room_id: roomId,
+          user_id: userId,
+          answers: answers
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error in saveQuizResponses:', error);
+      throw error;
+    }
   },
 
   // Save swipe
@@ -265,11 +297,12 @@ export const authService = {
 
       if (matchesError) throw matchesError;
 
-      // Reset room status to 'active' to allow restarting the process
+      // Reset room status to 'waiting' and remove member to allow fresh start
       const { error: roomError } = await supabase
         .from('rooms')
         .update({ 
-          status: 'active'
+          status: 'waiting',
+          member_id: null
         })
         .eq('id', roomId);
 
@@ -279,6 +312,34 @@ export const authService = {
     } catch (error) {
       console.error('Error resetting room:', error);
       throw error;
+    }
+  },
+
+  // Check if user has an existing room (completed or active) and reset it if needed
+  async getOrCreateUserRoom(userId: string) {
+    try {
+      // First check if user has any room as creator
+      const { data: existingRoom, error: roomError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('creator_id', userId)
+        .single();
+
+      if (existingRoom && !roomError) {
+        // If room exists and is completed, reset it
+        if (existingRoom.status === 'completed') {
+          await this.resetRoom(existingRoom.id);
+          return { ...existingRoom, status: 'waiting', member_id: null };
+        }
+        // If room is waiting or active, return it as is
+        return existingRoom;
+      }
+
+      // If no room exists, create a new one
+      return await this.createRoom(userId);
+    } catch (error) {
+      // If no room found, create a new one
+      return await this.createRoom(userId);
     }
   },
 
@@ -398,5 +459,114 @@ export const authService = {
 
     if (error) throw error;
     return true;
+  },
+
+  // Check if both partners have completed quiz in a room
+  async getRoomQuizResponses(roomId: string) {
+    try {
+      const { data: responses, error } = await supabase
+        .from('quiz_responses')
+        .select('*')
+        .eq('room_id', roomId);
+
+      if (error) throw error;
+
+      // Get user profiles separately to avoid join issues
+      const responsesWithProfiles = await Promise.all(
+        (responses || []).map(async (response) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', response.user_id)
+            .single();
+          
+          return {
+            ...response,
+            profiles: profile
+          };
+        })
+      );
+
+      // Check if we have exactly 2 responses (both partners)
+      if (responsesWithProfiles.length === 2) {
+        return {
+          bothCompleted: true,
+          user1Response: responsesWithProfiles[0],
+          user2Response: responsesWithProfiles[1]
+        };
+      } else if (responsesWithProfiles.length === 1) {
+        return {
+          bothCompleted: false,
+          completedBy: responsesWithProfiles[0].user_id,
+          waitingFor: 'partner'
+        };
+      } else {
+        return {
+          bothCompleted: false,
+          waitingFor: 'both'
+        };
+      }
+    } catch (error) {
+      console.error('Error checking room quiz responses:', error);
+      return {
+        bothCompleted: false,
+        waitingFor: 'error'
+      };
+    }
+  },
+
+  // Generate date suggestions for room when both partners have completed quiz
+  async generateRoomDateSuggestions(roomId: string) {
+    try {
+      // First get both quiz responses
+      const quizStatus = await this.getRoomQuizResponses(roomId);
+      
+      if (!quizStatus.bothCompleted) {
+        throw new Error('Les deux partenaires n\'ont pas encore complété le quiz');
+      }
+
+      // Get room details
+      const { data: room, error: roomError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('id', roomId)
+        .single();
+
+      if (roomError) throw roomError;
+
+      // Prepare data for API call with type checking
+      const user1Answers = quizStatus.bothCompleted && quizStatus.user1Response ? quizStatus.user1Response.answers : {};
+      const user2Answers = quizStatus.bothCompleted && quizStatus.user2Response ? quizStatus.user2Response.answers : {};
+      
+      const requestData = {
+        user1Answers,
+        user2Answers,
+        roomId: roomId
+      };
+
+      // Call the backend API (you'll need to implement this call in your app)
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001'}/api/dates/generate-room`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération des suggestions');
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur inconnue');
+      }
+
+      return result.dates;
+    } catch (error) {
+      console.error('Error generating room date suggestions:', error);
+      throw error;
+    }
   },
 };

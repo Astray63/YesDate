@@ -28,10 +28,9 @@ export default function ModeChoiceScreen({ navigation, route }: ModeChoiceScreen
   };
 
   const handleCoupleMode = () => {
-    // Naviguer vers le quiz en mode couple (avec room)
-    // Pour l'instant, on met null aussi, la room sera créée plus tard si nécessaire
+    // Naviguer vers l'écran de création/join de room pour le mode couple
     global.currentRoomId = null;
-    navigation.navigate('Quiz', { city: userCity, isCoupleMode: true });
+    navigation.navigate('Room', { city: userCity });
   };
 
   return (

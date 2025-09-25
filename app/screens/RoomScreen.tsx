@@ -14,9 +14,16 @@ import { theme } from '../utils/theme';
 import { NavigationProps } from '../types';
 import { authService } from '../services/supabase';
 
-interface RoomScreenProps extends NavigationProps {}
+interface RoomScreenProps extends NavigationProps {
+  route: {
+    params?: {
+      city?: string;
+    };
+  };
+}
 
-export default function RoomScreen({ navigation }: RoomScreenProps) {
+export default function RoomScreen({ navigation, route }: RoomScreenProps) {
+  const userCity = route.params?.city;
   const [userFixedCode, setUserFixedCode] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,23 +54,29 @@ export default function RoomScreen({ navigation }: RoomScreenProps) {
 
     setLoading(true);
     try {
-      // Create room using user's fixed code
-      const room = await authService.createRoom(userProfile.id);
+      // Get or create room (will reuse existing room if available)
+      const room = await authService.getOrCreateUserRoom(userProfile.id);
+      
+      const message = room.status === 'waiting' 
+        ? `Room prête avec votre code fixe: ${userFixedCode}\n\nPartagez ce code avec votre partenaire!`
+        : `Room existante réutilisée avec votre code fixe: ${userFixedCode}\n\nVotre partenaire peut vous rejoindre!`;
       
       Alert.alert(
         'Succès',
-        `Room créée avec votre code fixe: ${userFixedCode}\n\nPartagez ce code avec votre partenaire!`,
+        message,
         [{ text: 'OK' }]
       );
       
-      // Navigate to quiz with room info
+      // Navigate to quiz with room info and city
       navigation.navigate('Quiz', { 
+        city: userCity,
         roomId: room.id, 
         roomCode: room.room_code, 
-        isRoomCreator: true 
+        isRoomCreator: true,
+        isCoupleMode: true
       });
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible de créer la room');
+      Alert.alert('Erreur', error.message || 'Impossible de créer/réutiliser la room');
     } finally {
       setLoading(false);
     }
@@ -87,11 +100,13 @@ export default function RoomScreen({ navigation }: RoomScreenProps) {
       
       Alert.alert('Succès', 'Vous avez rejoint la room!');
       
-      // Navigate to quiz with room info
+      // Navigate to quiz with room info and city
       navigation.navigate('Quiz', { 
+        city: userCity,
         roomId: room.id, 
         roomCode: room.room_code, 
-        isRoomMember: true 
+        isRoomMember: true,
+        isCoupleMode: true
       });
     } catch (error: any) {
       Alert.alert('Erreur', error.message || 'Impossible de rejoindre la room');
@@ -148,7 +163,7 @@ export default function RoomScreen({ navigation }: RoomScreenProps) {
                 disabled={!userFixedCode || loading}
               >
                 <Text style={styles.primaryButtonText}>
-                  {loading ? 'Création...' : 'Créer la Room'}
+                  {loading ? 'Préparation...' : 'Utiliser ma Room'}
                 </Text>
               </TouchableOpacity>
             </View>

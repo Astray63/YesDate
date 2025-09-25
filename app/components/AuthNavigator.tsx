@@ -99,7 +99,7 @@ export default function AuthNavigator() {
               component={CommunityScreen}
               options={{ presentation: 'modal' }}
             />
-            <Stack.Screen name="RoomScreen" component={RoomScreen} />
+            <Stack.Screen name="Room" component={RoomScreen} />
           </>
         ) : (
           <>

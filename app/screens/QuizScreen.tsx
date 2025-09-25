@@ -14,22 +14,88 @@ import { theme } from '../utils/theme';
 import { NavigationProps, QuizOption, QuizQuestion, RootStackParamList } from '../types';
 import { getQuizQuestions } from '../utils/data';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { authService, supabase } from '../services/supabase';
 
 interface QuizScreenProps extends NavigationProps {}
 
 export default function QuizScreen({ navigation }: QuizScreenProps) {
   const route = useRoute();
-  const city = (route.params as RootStackParamList['Quiz'])?.city;
+  const params = route.params as RootStackParamList['Quiz'] || {};
+  const city = params.city;
+  const roomId = params.roomId;
+  const isCoupleMode = params.isCoupleMode || false;
+  
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [fadeAnim] = useState(new Animated.Value(1));
   const [loading, setLoading] = useState(true);
+  const [waitingForPartner, setWaitingForPartner] = useState(false);
+  const [partnerName, setPartnerName] = useState<string>('');
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const [waitingForPartnerToJoin, setWaitingForPartnerToJoin] = useState(false);
+  const [bothPartnersReady, setBothPartnersReady] = useState(false);
 
   useEffect(() => {
+    // Check if both partners are ready for couple mode
+    const checkPartnersReady = async () => {
+      if (isCoupleMode && roomId) {
+        try {
+          const currentUser = await authService.getCurrentUser();
+          if (currentUser) {
+            // Get room details to check if both partners are present
+            const { data: room } = await supabase
+              .from('rooms')
+              .select('*')
+              .eq('id', roomId)
+              .single();
+
+            if (room) {
+              // Check if both creator and member are present
+              if (room.creator_id && room.member_id && room.status === 'active') {
+                setBothPartnersReady(true);
+              } else if (room.creator_id === currentUser.id && !room.member_id) {
+                // Creator is waiting for member to join
+                setWaitingForPartnerToJoin(true);
+                
+                // Start polling to check when member joins
+                const checkInterval = setInterval(async () => {
+                  const { data: updatedRoom } = await supabase
+                    .from('rooms')
+                    .select('*')
+                    .eq('id', roomId)
+                    .single();
+                  
+                  if (updatedRoom && updatedRoom.member_id && updatedRoom.status === 'active') {
+                    clearInterval(checkInterval);
+                    setWaitingForPartnerToJoin(false);
+                    setBothPartnersReady(true);
+                  }
+                }, 2000); // Check every 2 seconds
+                
+                // Cleanup interval when component unmounts
+                return () => clearInterval(checkInterval);
+              } else if (room.member_id === currentUser.id && room.creator_id) {
+                // Member is ready, creator should already be there
+                setBothPartnersReady(true);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error checking partners readiness:', error);
+          // Fallback - allow quiz to proceed
+          setBothPartnersReady(true);
+        }
+      } else {
+        // Solo mode - ready to start
+        setBothPartnersReady(true);
+      }
+    };
+
+    checkPartnersReady();
     loadQuizQuestions();
-  }, []);
+  }, [isCoupleMode, roomId]);
 
   const loadQuizQuestions = async () => {
     try {
@@ -53,19 +119,91 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
     }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!selectedOption) return;
 
     if (isLastQuestion) {
-      // Navigate to Main tabs, specifically the SwipeDate screen with answers and roomId
-      navigation.navigate('Main', {
-        screen: 'SwipeDate',
-        params: {
-          quizAnswers: answers,
-          city: city,
-          roomId: global.currentRoomId || undefined
+      // Save quiz answers
+      try {
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser && roomId && isCoupleMode) {
+          await authService.saveQuizResponses(roomId, currentUser.id, answers);
+          
+          // Check if both partners have completed the quiz
+          setCheckingStatus(true);
+          const quizStatus = await authService.getRoomQuizResponses(roomId);
+          
+          if (quizStatus.bothCompleted) {
+            // Both partners completed - navigate to swipe
+            navigation.navigate('Main', {
+              screen: 'SwipeDate',
+              params: {
+                quizAnswers: answers,
+                city: city,
+                roomId: roomId,
+                isCoupleMode: true
+              }
+            });
+          } else {
+            // Only one partner completed - show waiting screen
+            // Get partner name for personalized message
+            if (quizStatus.user1Response?.user_id === currentUser.id && quizStatus.user2Response?.profiles) {
+              setPartnerName(quizStatus.user2Response.profiles.full_name || 'ton partenaire');
+            } else if (quizStatus.user2Response?.user_id === currentUser.id && quizStatus.user1Response?.profiles) {
+              setPartnerName(quizStatus.user1Response.profiles.full_name || 'ton partenaire');
+            } else {
+              setPartnerName('ton partenaire');
+            }
+            
+            setWaitingForPartner(true);
+            
+            // Start polling to check when partner completes
+            const checkInterval = setInterval(async () => {
+              const status = await authService.getRoomQuizResponses(roomId);
+              if (status.bothCompleted) {
+                clearInterval(checkInterval);
+                navigation.navigate('Main', {
+                  screen: 'SwipeDate',
+                  params: {
+                    quizAnswers: answers,
+                    city: city,
+                    roomId: roomId,
+                    isCoupleMode: true
+                  }
+                });
+              }
+            }, 3000); // Check every 3 seconds
+            
+            // Cleanup interval when component unmounts
+            return () => clearInterval(checkInterval);
+          }
+        } else {
+          // Solo mode or no room - navigate directly
+          navigation.navigate('Main', {
+            screen: 'SwipeDate',
+            params: {
+              quizAnswers: answers,
+              city: city,
+              roomId: roomId,
+              isCoupleMode: isCoupleMode
+            }
+          });
         }
-      });
+      } catch (error) {
+        console.error('Error saving quiz responses:', error);
+        // Fallback - navigate anyway
+        navigation.navigate('Main', {
+          screen: 'SwipeDate',
+          params: {
+            quizAnswers: answers,
+            city: city,
+            roomId: roomId,
+            isCoupleMode: isCoupleMode
+          }
+        });
+      } finally {
+        setCheckingStatus(false);
+      }
     } else {
       // Animate transition and go to next question
       Animated.timing(fadeAnim, {
@@ -111,6 +249,90 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Impossible de charger les questions</Text>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show waiting screen if partner hasn't completed quiz yet
+  if (waitingForPartner) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.waitingContainer}>
+          <View style={styles.waitingContent}>
+            <Text style={styles.waitingEmoji}>⏳</Text>
+            <Text style={styles.waitingTitle}>En attente de {partnerName}</Text>
+            <Text style={styles.waitingSubtitle}>
+              {partnerName === 'ton partenaire' 
+                ? 'Ton partenaire est en train de répondre au quiz' 
+                : `${partnerName} est en train de répondre au quiz`}
+            </Text>
+            <Text style={styles.waitingDescription}>
+              Nous générons des suggestions parfaites pour vous deux dès que {partnerName === 'ton partenaire' ? 'il/elle' : partnerName.split(' ')[0]} aura terminé !
+            </Text>
+            
+            <View style={styles.waitingAnimationContainer}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+            
+            <Text style={styles.waitingTip}>
+              💡 Conseil : Profites de ce moment pour imaginer quelle surprise tu aimerais lui faire !
+            </Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show waiting screen if partner needs to join before starting quiz
+  if (waitingForPartnerToJoin) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.waitingContainer}>
+          <View style={styles.waitingContent}>
+            <Text style={styles.waitingEmoji}>👥</Text>
+            <Text style={styles.waitingTitle}>En attente de votre partenaire</Text>
+            <Text style={styles.waitingSubtitle}>
+              Partagez le code de la room avec votre partenaire pour qu'il/elle puisse vous rejoindre
+            </Text>
+            <Text style={styles.waitingDescription}>
+              Le quiz commencera automatiquement dès que votre partenaire aura rejoint la room !
+            </Text>
+            
+            <View style={styles.waitingAnimationContainer}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+            
+            <Text style={styles.waitingTip}>
+              💡 Conseil : Vous pouvez déjà commencer à réfléchir à vos préférences pour votre prochaine date !
+            </Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Don't show quiz until both partners are ready in couple mode
+  if (isCoupleMode && !bothPartnersReady) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingSpinner
+          message="Préparation du quiz..."
+          showProgress={false}
+          size="medium"
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Show checking status if verifying partner's completion
+  if (checkingStatus) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingSpinner
+          message="Vérification des réponses..."
+          showProgress={false}
+          size="medium"
+        />
       </SafeAreaView>
     );
   }
@@ -322,5 +544,55 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.mutedLight,
     textAlign: 'center',
+  },
+  waitingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.backgroundLight,
+  },
+  waitingContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    maxWidth: 400,
+  },
+  waitingEmoji: {
+    fontSize: 64,
+    marginBottom: theme.spacing.lg,
+  },
+  waitingTitle: {
+    fontSize: theme.fonts.sizes['2xl'],
+    fontWeight: '700' as any,
+    color: theme.colors.textLight,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  waitingSubtitle: {
+    fontSize: theme.fonts.sizes.lg,
+    color: theme.colors.mutedLight,
+    textAlign: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  waitingDescription: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.textLight,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+    lineHeight: 24,
+  },
+  waitingAnimationContainer: {
+    marginVertical: theme.spacing.xl,
+  },
+  waitingTip: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.primary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    backgroundColor: theme.colors.primary + '15',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.lg,
   },
 });
