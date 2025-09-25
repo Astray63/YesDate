@@ -323,17 +323,12 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     return locationMap[locationType] || locationType;
   };
 
-  // Composant visuel inspiré du design moderne
+  // Composant visuel simple inspiré de l'image
   const DateVisual = ({ card, style }: { card: DateIdea; style: any }) => {
     return (
       <View style={[style, { position: 'relative' }]}>
-        {/* Fond avec dégradé inspiré de l'image */}
-        <View style={styles.gradientBackground} />
-
-        {/* Motifs décoratifs subtils */}
-        <View style={styles.patternOverlay}>
-          <Text style={styles.patternIcon}>{getCategoryEmoji(card.category)}</Text>
-        </View>
+        {/* Fond simple et épuré */}
+        <View style={styles.simpleBackground} />
       </View>
     );
   };
@@ -410,58 +405,38 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
               },
             ]}
           >
-            {/* Nouveau design pour l'aperçu */}
-            <View style={styles.newCardDesign}>
-              {/* Section visuelle avec fond sombre */}
+            {/* Design simple pour l'aperçu */}
+            <View style={styles.simpleCardDesign}>
+              {/* Section visuelle simple */}
               <DateVisual card={nextCard} style={styles.imageSection} />
 
-              {/* Section d'informations en haut */}
-              <View style={styles.topInfoSection}>
-                <View style={styles.infoPill}>
-                  <Text style={styles.infoText}>📍 {nextCard.area || 'Paris'}</Text>
-                </View>
-                <View style={styles.infoPill}>
-                  <Text style={styles.infoText}>📏 5 km</Text>
-                </View>
-                <View style={styles.infoPill}>
-                  <Text style={styles.infoText}>💰 {getCostLabel(nextCard.cost || 'moderate')}</Text>
-                </View>
+              {/* Catégorie centrée en haut */}
+              <View style={styles.categorySectionTop}>
+                <Text style={styles.categoryTextTop}>{getCategoryLabel(nextCard.category).toUpperCase()}</Text>
               </View>
 
-              {/* Section centrale avec titre */}
-              <View style={styles.centerContent}>
-                <Text style={styles.mainTitle}>{nextCard.title}</Text>
-
-                <View style={styles.indicatorsRow}>
-                  <View style={styles.yesdateIndicator}>
-                    <Text style={styles.yesdateText}>YESDATE</Text>
-                  </View>
-                  <View style={styles.moodIndicator}>
-                    <Text style={styles.moodText}>{getCategoryLabel(nextCard.category)}</Text>
-                  </View>
-                </View>
+              {/* Titre principal au centre */}
+              <View style={styles.mainTitleSection}>
+                <Text style={styles.mainTitleText}>{nextCard.title}</Text>
               </View>
 
-              {/* Grand indicateur LIKE sur le côté */}
-              <View style={styles.likeIndicator}>
-                <Text style={styles.likeText}>LIKE</Text>
+              {/* Description */}
+              <View style={styles.descriptionSection}>
+                <Text style={styles.descriptionText}>
+                  {nextCard.description}
+                </Text>
               </View>
 
-              {/* Section d'informations en bas */}
+              {/* Informations sans icônes */}
               <View style={styles.bottomInfoSection}>
-                <View style={styles.bottomInfoRow}>
-                  <View style={styles.bottomInfoItem}>
-                    <Text style={styles.bottomInfoIcon}>📍</Text>
-                    <Text style={styles.bottomInfoText}>2,3 km</Text>
-                  </View>
-                  <View style={styles.bottomInfoItem}>
-                    <Text style={styles.bottomInfoIcon}>⏱️</Text>
-                    <Text style={styles.bottomInfoText}>{nextCard.duration}</Text>
-                  </View>
-                  <View style={styles.bottomInfoItem}>
-                    <Text style={styles.bottomInfoIcon}>💰</Text>
-                    <Text style={styles.bottomInfoText}>{getCostLabel(nextCard.cost || 'moderate')}</Text>
-                  </View>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoText}>{getCostLabel(nextCard.cost || 'moderate')}</Text>
+                </View>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoText}>{getLocationTypeLabel(nextCard.location_type || 'city')}</Text>
+                </View>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoText}>{nextCard.area ? `${nextCard.area} km` : '5 km'}</Text>
                 </View>
               </View>
             </View>
@@ -488,57 +463,37 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
               },
             ]}
           >
-            <Pressable style={styles.newCardDesign} onPress={handleCardPress}>
-              {/* Section visuelle avec fond sombre */}
+            <Pressable style={styles.simpleCardDesign} onPress={handleCardPress}>
+              {/* Section visuelle simple */}
               <DateVisual card={currentCard} style={styles.imageSection} />
 
-              {/* Section d'informations en haut */}
-              <View style={styles.topInfoSection}>
-                <View style={styles.infoPill}>
-                  <Text style={styles.infoText}>📍 {currentCard.area || 'Paris'}</Text>
-                </View>
-                <View style={styles.infoPill}>
-                  <Text style={styles.infoText}>📏 5 km</Text>
-                </View>
-                <View style={styles.infoPill}>
-                  <Text style={styles.infoText}>💰 {getCostLabel(currentCard.cost || 'moderate')}</Text>
-                </View>
+              {/* Catégorie centrée en haut */}
+              <View style={styles.categorySectionTop}>
+                <Text style={styles.categoryTextTop}>{getCategoryLabel(currentCard.category).toUpperCase()}</Text>
               </View>
 
-              {/* Section centrale avec titre */}
-              <View style={styles.centerContent}>
-                <Text style={styles.mainTitle}>{currentCard.title}</Text>
-
-                <View style={styles.indicatorsRow}>
-                  <View style={styles.yesdateIndicator}>
-                    <Text style={styles.yesdateText}>YESDATE</Text>
-                  </View>
-                  <View style={styles.moodIndicator}>
-                    <Text style={styles.moodText}>{getCategoryLabel(currentCard.category)}</Text>
-                  </View>
-                </View>
+              {/* Titre principal au centre */}
+              <View style={styles.mainTitleSection}>
+                <Text style={styles.mainTitleText}>{currentCard.title}</Text>
               </View>
 
-              {/* Grand indicateur LIKE sur le côté */}
-              <View style={styles.likeIndicator}>
-                <Text style={styles.likeText}>LIKE</Text>
+              {/* Description */}
+              <View style={styles.descriptionSection}>
+                <Text style={styles.descriptionText}>
+                  {currentCard.description}
+                </Text>
               </View>
 
-              {/* Section d'informations en bas */}
+              {/* Informations sans icônes */}
               <View style={styles.bottomInfoSection}>
-                <View style={styles.bottomInfoRow}>
-                  <View style={styles.bottomInfoItem}>
-                    <Text style={styles.bottomInfoIcon}>📍</Text>
-                    <Text style={styles.bottomInfoText}>2,3 km</Text>
-                  </View>
-                  <View style={styles.bottomInfoItem}>
-                    <Text style={styles.bottomInfoIcon}>⏱️</Text>
-                    <Text style={styles.bottomInfoText}>{currentCard.duration}</Text>
-                  </View>
-                  <View style={styles.bottomInfoItem}>
-                    <Text style={styles.bottomInfoIcon}>💰</Text>
-                    <Text style={styles.bottomInfoText}>{getCostLabel(currentCard.cost || 'moderate')}</Text>
-                  </View>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoText}>{getCostLabel(currentCard.cost || 'moderate')}</Text>
+                </View>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoText}>{getLocationTypeLabel(currentCard.location_type || 'city')}</Text>
+                </View>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoText}>{currentCard.area ? `${currentCard.area} km` : '5 km'}</Text>
                 </View>
               </View>
             </Pressable>
@@ -662,56 +617,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: theme.spacing.xl,
     gap: 100,
     marginTop: theme.spacing.xl,
   },
   actionButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 8,
+      height: 4,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   rejectButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#ffffff',
     width: 70,
     height: 70,
     borderRadius: 35,
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#ff4757',
     shadowColor: '#ff4757',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 6,
   },
   likeButton: {
-    backgroundColor: theme.colors.primary,
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 4,
+    backgroundColor: '#ff6b9d',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 2,
     borderColor: '#ffffff',
-    shadowColor: theme.colors.primary,
+    shadowColor: '#ff6b9d',
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 4,
     },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   superLikeButton: {
     backgroundColor: '#ffffff',
@@ -720,12 +675,14 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   rejectIcon: {
-    fontSize: 32,
+    fontSize: 24,
     color: '#ff4757',
+    fontWeight: 'bold',
   },
   likeIcon: {
-    fontSize: 36,
+    fontSize: 24,
     color: '#ffffff',
+    fontWeight: 'bold',
   },
   superLikeIcon: {
     fontSize: 24,
@@ -770,19 +727,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: theme.borderRadius.lg,
     borderTopRightRadius: theme.borderRadius.lg,
   },
-  categoryBadge: {
-    backgroundColor: theme.colors.primary + '20',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '40',
-  },
-  categoryText: {
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: '600' as any,
-    color: theme.colors.primary,
-  },
   costBadge: {
     backgroundColor: theme.colors.mutedLight + '20',
     paddingHorizontal: theme.spacing.sm,
@@ -790,11 +734,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.full,
     borderWidth: 1,
     borderColor: theme.colors.mutedLight + '40',
-  },
-  costText: {
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: '600' as any,
-    color: theme.colors.mutedLight,
   },
   visualSection: {
     flex: 3,
@@ -822,16 +761,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
-  },
-  locationIcon: {
-    fontSize: theme.fonts.sizes.sm,
-    marginRight: theme.spacing.xs,
-    color: theme.colors.mutedLight,
-  },
-  locationText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.mutedLight,
-    fontWeight: '500' as any,
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -895,9 +824,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  categoryIcon: {
-    fontSize: 32,
-  },
   decorativePattern: {
     position: 'absolute',
     top: 0,
@@ -924,337 +850,153 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'rgba(255, 255, 255, 0.6)',
   },
-  // Nouveau design de carte inspiré de l'image
-  newCardDesign: {
+  // Design inspiré exactement de l'image fournie
+  simpleCardDesign: {
     flex: 1,
-    backgroundColor: theme.colors.backgroundDark,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: '#f8d7e0',
+    borderRadius: 20,
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: theme.colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.08)',
-  },
-  categoryLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-  categoryEmoji: {
-    fontSize: 24,
-  },
-  categoryName: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: '700' as any,
-    color: theme.colors.textLight,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  mainContent: {
-    flex: 1,
-    padding: theme.spacing.lg,
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-  },
-  iconTitleSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-  },
-  iconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  mainIcon: {
+  simpleBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#f8d7e0',
+    borderRadius: 20,
+  },
+  topLeftInfo: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+  },
+  nameText: {
     fontSize: 28,
+    fontWeight: '700' as any,
+    color: '#1a1a1a',
+    lineHeight: 32,
   },
-  titleArea: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  metaRow: {
+  distanceCostInfo: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.xs,
-    gap: theme.spacing.sm,
+    gap: 15,
   },
-  durationText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.mutedLight,
-    fontWeight: '600' as any,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: theme.borderRadius.full,
-  },
-  description: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.textLight,
-    lineHeight: 24,
-    marginBottom: theme.spacing.lg,
-    fontWeight: '400' as any,
-  },
-  detailsSection: {
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.sm,
-  },
-  detailRow: {
+  distanceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.sm,
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
-    borderRadius: theme.borderRadius.md,
+    gap: 4,
   },
-  detailIcon: {
-    fontSize: 18,
+  locationIcon: {
+    fontSize: 16,
+    color: '#666',
   },
-  detailText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.mutedLight,
+  distanceText: {
+    fontSize: 16,
+    color: '#666',
     fontWeight: '500' as any,
   },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+  costText: {
+    fontSize: 16,
+    color: '#666',
   },
-  // Styles pour les images
-  cardImage: {
-    width: '100%',
-    height: '100%',
+  centerDescription: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    borderTopLeftRadius: theme.borderRadius.lg,
-    borderTopRightRadius: theme.borderRadius.lg,
-  },
-  imageLoadingContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
+    top: '50%',
+    left: 20,
+    right: 20,
+    transform: [{ translateY: -50 }],
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
-  imageOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    opacity: 0.15,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  descriptionText: {
+    fontSize: 16,
+    fontWeight: '400' as any,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
   },
   imageSection: {
     height: CARD_HEIGHT * 0.45,
     width: '100%',
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f8d7e0',
   },
-  retryText: {
-    color: theme.colors.primary,
-    fontSize: theme.fonts.sizes.sm,
-    marginTop: theme.spacing.xs,
+  categorySectionTop: {
+    position: 'absolute',
+    top: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  categoryTextTop: {
+    fontSize: 16,
+    fontWeight: '700' as any,
+    color: '#ff6b9d',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     textAlign: 'center',
   },
-  // Nouveau design inspiré de l'image
-  gradientBackground: {
+  mainTitleSection: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: theme.colors.backgroundDark,
-    borderRadius: theme.borderRadius.lg,
-  },
-  patternOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
+    top: '35%',
+    left: 20,
+    right: 20,
+    transform: [{ translateY: -50 }],
     alignItems: 'center',
-    opacity: 0.1,
   },
-  patternIcon: {
-    fontSize: 120,
-    color: theme.colors.primary,
+  mainTitleText: {
+    fontSize: 32,
+    fontWeight: '800' as any,
+    color: '#1a1a1a',
+    textAlign: 'center',
+    lineHeight: 36,
   },
-  // Section d'informations en haut
-  topInfoSection: {
+  descriptionSection: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    padding: theme.spacing.lg,
+    top: '55%',
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+  },
+  bottomInfoSection: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     zIndex: 10,
   },
-  infoPill: {
-    backgroundColor: 'rgba(248, 246, 247, 0.15)',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(248, 246, 247, 0.2)',
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  infoIcon: {
+    fontSize: 16,
+    color: '#666',
   },
   infoText: {
-    color: theme.colors.textDark,
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: '600' as any,
-  },
-  // Section centrale avec titre
-  centerContent: {
-    position: 'absolute',
-    top: '40%',
-    left: 0,
-    right: 0,
-    paddingHorizontal: theme.spacing.xl,
-    alignItems: 'center',
-    transform: [{ translateY: -50 }],
-  },
-  mainTitle: {
-    fontSize: 42,
-    fontWeight: '800' as any,
-    color: theme.colors.textDark,
-    textAlign: 'center',
-    lineHeight: 48,
-    marginBottom: theme.spacing.lg,
-  },
-  // Indicateurs YESDATE et ambiance
-  indicatorsRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-  },
-  yesdateIndicator: {
-    backgroundColor: 'rgba(248, 246, 247, 0.2)',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(248, 246, 247, 0.3)',
-  },
-  yesdateText: {
-    color: theme.colors.textDark,
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: '700' as any,
-    letterSpacing: 1,
-  },
-  moodIndicator: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
-    shadowColor: theme.colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  moodText: {
-    color: theme.colors.textDark,
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: '700' as any,
-    letterSpacing: 1,
-  },
-  // Grand indicateur LIKE sur le côté
-  likeIndicator: {
-    position: 'absolute',
-    right: -25,
-    top: '50%',
-    transform: [{ translateY: -50 }, { rotate: '15deg' }],
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.lg,
-    borderRadius: theme.borderRadius.full,
-    shadowColor: theme.colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
-    zIndex: 20,
-    borderWidth: 3,
-    borderColor: '#ffffff',
-  },
-  likeText: {
-    fontSize: 24,
-    fontWeight: '900' as any,
-    color: theme.colors.textDark,
-    letterSpacing: 2,
-  },
-  // Section d'informations en bas
-  bottomInfoSection: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: theme.spacing.xl,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(34, 16, 25, 0.8)',
-  },
-  bottomInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.lg,
-  },
-  bottomInfoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-  bottomInfoIcon: {
-    fontSize: 18,
-    color: theme.colors.textDark,
-  },
-  bottomInfoText: {
-    color: theme.colors.textDark,
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: '600' as any,
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500' as any,
   },
 });
