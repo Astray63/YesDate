@@ -123,8 +123,9 @@ export type RootStackParamList = {
   Welcome: undefined;
   Auth: undefined;
   CityInput: undefined;
-  Quiz: { city?: string };
-  SwipeDate: { quizAnswers: { [key: string]: string }; city?: string };
+  ModeChoice: { city?: string };
+  Quiz: { city?: string; isCoupleMode?: boolean };
+  SwipeDate: { quizAnswers: { [key: string]: string }; city?: string; roomId?: string; isCoupleMode?: boolean };
   Match: { matches: any[] };
   Room: { roomId: string };
   MainTab: undefined;

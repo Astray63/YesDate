@@ -14,6 +14,7 @@ declare global {
 // Screens
 import WelcomeScreen from '../screens/WelcomeScreen';
 import AuthScreen from '../screens/AuthScreen';
+import ModeChoiceScreen from '../screens/ModeChoiceScreen';
 import RoomScreen from '../screens/RoomScreen';
 import CityInputScreen from '../screens/CityInputScreen';
 import QuizScreen from '../screens/QuizScreen';
@@ -35,37 +36,18 @@ export default function AuthNavigator() {
   useEffect(() => {
     const checkUserStatus = async () => {
       if (!loading && user) {
-        console.log('🔍 AuthNavigator: Utilisateur connecté, vérification du statut...');
-        
+        console.log('🔍 AuthNavigator: Utilisateur connecté, redirection vers le choix de mode...');
+
         // Vérifier si on doit attendre la popup de connexion
         if (global.currentRoomId === 'auth_popup_pending') {
           console.log('⏳ AuthNavigator: En attente de la popup de connexion...');
           setWaitForAuthPopup(true);
           return;
         }
-        
-        // Vérifier si l'utilisateur a déjà une room active
-        setCheckingRoom(true);
-        try {
-          const activeRoom = await authService.getUserActiveRoom(user.id);
-          
-          if (activeRoom) {
-            // Si l'utilisateur a une room active, rediriger vers la saisie de ville puis le quiz
-            setInitialRoute('CityInput');
-            // Stocker le roomId pour l'utiliser plus tard
-            global.currentRoomId = activeRoom.id;
-          } else {
-            // Sinon, rediriger vers l'écran principal
-            setInitialRoute('Main');
-            global.currentRoomId = null;
-          }
-        } catch (error) {
-          console.error('Error checking user room:', error);
-          setInitialRoute('Main');
-          global.currentRoomId = null;
-        } finally {
-          setCheckingRoom(false);
-        }
+
+        // Rediriger directement vers le choix de mode (solo/couple)
+        setInitialRoute('ModeChoice');
+        global.currentRoomId = null; // Pas de room automatique
       } else if (!loading && !user) {
         // Utilisateur non connecté, rediriger vers l'accueil
         setInitialRoute('Welcome');
@@ -101,6 +83,7 @@ export default function AuthNavigator() {
       >
         {user ? (
           <>
+            <Stack.Screen name="ModeChoice" component={ModeChoiceScreen} />
             <Stack.Screen name="CityInput" component={CityInputScreen} />
             <Stack.Screen name="Quiz" component={QuizScreen} />
             <Stack.Screen name="SwipeDate" component={SwipeDateScreen} />

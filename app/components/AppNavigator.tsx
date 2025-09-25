@@ -7,6 +7,7 @@ import { Home, Heart, Lightbulb, Trophy, Search } from 'lucide-react-native';
 // Screens
 import WelcomeScreen from '../screens/WelcomeScreen';
 import AuthScreen from '../screens/AuthScreen';
+import ModeChoiceScreen from '../screens/ModeChoiceScreen';
 import RoomScreen from '../screens/RoomScreen';
 import QuizScreen from '../screens/QuizScreen';
 import SwipeDateScreen from '../screens/SwipeDateScreen';
@@ -135,14 +136,16 @@ export default function AppNavigator() {
           headerShown: false,
           cardStyle: { backgroundColor: theme.colors.backgroundLight },
         }}
+        initialRouteName="ModeChoice"
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Auth" component={AuthScreen} />
+        <Stack.Screen name="ModeChoice" component={ModeChoiceScreen} />
         <Stack.Screen name="RoomScreen" component={RoomScreen} />
         <Stack.Screen name="Quiz" component={QuizScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
-        <Stack.Screen 
-          name="Gamification" 
+        <Stack.Screen
+          name="Gamification"
           component={GamificationScreen}
           options={{ presentation: 'modal' }}
         />

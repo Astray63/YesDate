@@ -58,13 +58,13 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
 
     if (isLastQuestion) {
       // Navigate to Main tabs, specifically the SwipeDate screen with answers and roomId
-      navigation.navigate('Main', { 
-        screen: 'SwipeDate', 
-        params: { 
+      navigation.navigate('Main', {
+        screen: 'SwipeDate',
+        params: {
           quizAnswers: answers,
           city: city,
-          roomId: global.currentRoomId 
-        } 
+          roomId: global.currentRoomId || undefined
+        }
       });
     } else {
       // Animate transition and go to next question

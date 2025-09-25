@@ -24,11 +24,7 @@ import { useTheme } from '../utils/useTheme';
 export interface EndOfSwipesOverlayProps {
   visible: boolean;
   onRetryQuiz: () => void;
-  onExpandFilters: () => void;
-  onRefresh: () => void;
-  onEnableNotifications?: () => void;
-  onOpenSettings?: () => void; // pour Localisation
-  onExpandRadius?: () => void;
+  onViewMatches: () => void;
   onClose?: () => void;
   // Aides tests/variantes
   isOfflineOverride?: boolean;
@@ -46,11 +42,7 @@ export interface EndOfSwipesOverlayProps {
 const EndOfSwipesOverlay = memo(function EndOfSwipesOverlay({
   visible,
   onRetryQuiz,
-  onExpandFilters,
-  onRefresh,
-  onEnableNotifications,
-  onOpenSettings,
-  onExpandRadius,
+  onViewMatches,
   onClose,
   isOfflineOverride,
   locationDeniedOverride,
@@ -186,11 +178,9 @@ const EndOfSwipesOverlay = memo(function EndOfSwipesOverlay({
 
   const subtitleToShow = useMemo(() => {
     if (offlineResolved) return offlineSubtitle;
-    if (locationResolved && onOpenSettings) return locationDisabledSubtitle;
-    // Heuristique "filtres trop stricts" si l’on propose d’étendre le rayon
-    if (onExpandRadius) return filtersStrictSubtitle;
+    if (locationResolved) return locationDisabledSubtitle;
     return defaultSubtitle;
-  }, [defaultSubtitle, filtersStrictSubtitle, offlineResolved, locationResolved, offlineSubtitle, onOpenSettings, onExpandRadius]);
+  }, [defaultSubtitle, offlineResolved, locationResolved, offlineSubtitle, locationDisabledSubtitle]);
 
   const handleClose = useCallback(() => {
     onClose?.();
@@ -205,54 +195,14 @@ const EndOfSwipesOverlay = memo(function EndOfSwipesOverlay({
     onClose?.();
   }, [onRetryQuiz, onClose]);
 
-  const handleExpandFilters = useCallback(() => {
-    console.log('expand_filters_clicked');
-    onExpandFilters?.();
-  }, [onExpandFilters]);
-
-  const handleExpandRadius = useCallback(() => {
-    console.log('expand_radius_clicked');
-    onExpandRadius?.();
-  }, [onExpandRadius]);
-
-  const handleRefresh = useCallback(async () => {
-    console.log('refresh_clicked');
-    setLoadingRefresh(true);
+  const handleViewMatches = useCallback(async () => {
     try {
-      await onRefresh?.();
-      // bref état chargement
-      await new Promise((r) => setTimeout(r, 500));
-    } finally {
-      setLoadingRefresh(false);
-    }
-  }, [onRefresh]);
-
-  const handleEnableNotifications = useCallback(async () => {
-    console.log('enable_notifications_clicked');
-    try {
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status !== 'granted') {
-        const req = await Notifications.requestPermissionsAsync();
-        if (req.status !== 'granted') {
-          console.log('Permission notifications refusée');
-        }
-      }
+      await Haptics.selectionAsync();
     } catch {}
-    onEnableNotifications?.();
-  }, [onEnableNotifications]);
-
-  const handleOpenSettings = useCallback(async () => {
-    console.log('open_settings_clicked');
-    if (onOpenSettings) {
-      onOpenSettings();
-    } else {
-      if (Platform.OS !== 'web') {
-        try {
-          await Linking.openSettings();
-        } catch {}
-      }
-    }
-  }, [onOpenSettings]);
+    console.log('view_matches_clicked');
+    onViewMatches?.();
+    onClose?.();
+  }, [onViewMatches, onClose]);
 
   if (!visible) return null;
 
@@ -315,70 +265,16 @@ const EndOfSwipesOverlay = memo(function EndOfSwipesOverlay({
               </TouchableOpacity>
             </View>
 
-            <View style={styles.secondaryGrid}>
+            <View style={styles.buttonsRow}>
               <TouchableOpacity
-                testID="btnExpandFilters"
-                accessibilityLabel="Assouplir mes critères"
-                onPress={handleExpandFilters}
-                style={[styles.secondaryBtn, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}
-                activeOpacity={0.85}
+                testID="btnViewMatches"
+                accessibilityLabel="Voir les matchs"
+                onPress={handleViewMatches}
+                style={[styles.primaryBtn, { backgroundColor: theme.colors.primary }]}
+                activeOpacity={0.9}
               >
-                <Text style={[styles.secondaryText, { color: theme.colors.text }]}>Assouplir mes critères</Text>
+                <Text style={styles.primaryText}>Voir les matchs</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                testID="btnRefresh"
-                accessibilityLabel="Rafraîchir"
-                onPress={handleRefresh}
-                style={[styles.secondaryBtn, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}
-                disabled={loadingRefresh}
-                activeOpacity={0.85}
-              >
-                {loadingRefresh ? (
-                  <View style={styles.loadingInline}>
-                    <ActivityIndicator size="small" color={theme.colors.primary} />
-                    <Text style={[styles.secondaryText, { marginLeft: 8, color: theme.colors.text }]}>Chargement...</Text>
-                  </View>
-                ) : (
-                  <Text style={[styles.secondaryText, { color: theme.colors.text }]}>Rafraîchir</Text>
-                )}
-              </TouchableOpacity>
-
-              {onEnableNotifications && (
-                <TouchableOpacity
-                  testID="btnEnableNotifications"
-                  accessibilityLabel="Activer les notifications"
-                  onPress={handleEnableNotifications}
-                  style={[styles.secondaryBtn, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.secondaryText, { color: theme.colors.text }]}>Activer les notifications</Text>
-                </TouchableOpacity>
-              )}
-
-              {onExpandRadius && (
-                <TouchableOpacity
-                  testID="btnExpandRadius"
-                  accessibilityLabel="Découvrir plus loin"
-                  onPress={handleExpandRadius}
-                  style={[styles.secondaryBtn, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.secondaryText, { color: theme.colors.text }]}>Découvrir plus loin</Text>
-                </TouchableOpacity>
-              )}
-
-              {locationResolved && (
-                <TouchableOpacity
-                  testID="btnOpenSettings"
-                  accessibilityLabel="Ouvrir les réglages"
-                  onPress={handleOpenSettings}
-                  style={[styles.secondaryBtn, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.secondaryText, { color: theme.colors.text }]}>Ouvrir les réglages</Text>
-                </TouchableOpacity>
-              )}
             </View>
 
             <TouchableOpacity

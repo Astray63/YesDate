@@ -37,6 +37,7 @@ interface SwipeDateScreenProps extends NavigationProps {
 export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenProps) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [swipedCards, setSwipedCards] = useState<{ [key: string]: 'left' | 'right' }>({});
+  const [matches, setMatches] = useState<DateIdea[]>([]);
   const [dates, setDates] = useState<DateIdea[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -44,6 +45,13 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCard, setSelectedCard] = useState<DateIdea | null>(null);
   const [endVisible, setEndVisible] = useState(false);
+  const [isCoupleMode, setIsCoupleMode] = useState(false);
+
+  // Récupérer les paramètres de navigation
+  const quizAnswers = route.params?.quizAnswers || {};
+  const userCity = route.params?.city;
+  const roomId = route.params?.roomId;
+  const isCoupleModeParam = (route.params as any)?.isCoupleMode || false;
 
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -73,8 +81,9 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   const isLastCard = currentCardIndex >= dates.length - 1;
 
   useEffect(() => {
+    setIsCoupleMode(isCoupleModeParam);
     loadDateIdeas();
-  }, []);
+  }, [isCoupleModeParam]);
 
   // Animation d'entrée pour les cartes
   useEffect(() => {
@@ -165,6 +174,11 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
         ...prev,
         [currentCard.id]: direction,
       }));
+
+      // Si c'est un like (swipe vers la droite), ajouter aux matchs
+      if (direction === 'right' && currentCard) {
+        setMatches(prev => [...prev, currentCard]);
+      }
 
       // Check if there are more cards after this swipe
       const hasMoreCards = currentCardIndex < dates.length - 1;
@@ -374,17 +388,9 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
             navigation.navigate('Quiz');
             setEndVisible(false);
           }}
-          onExpandFilters={() => {
-            // Exemple: ouvrir un panneau de filtres (à intégrer selon votre app)
-            console.log('Assouplir mes critères');
-          }}
-          onRefresh={() => loadDateIdeas()}
-          onEnableNotifications={() => console.log('Notifications activées')}
-          onOpenSettings={() => console.log('Ouverture des réglages')}
-          onExpandRadius={() => {
-            console.log('Étendre le rayon de recherche');
-            // Exemple minimal: relancer une recherche
-            loadDateIdeas();
+          onViewMatches={() => {
+            navigation.navigate('Match', { matches });
+            setEndVisible(false);
           }}
           onClose={() => setEndVisible(false)}
         />
@@ -558,15 +564,9 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
           navigation.navigate('Quiz');
           setEndVisible(false);
         }}
-        onExpandFilters={() => {
-          console.log('Assouplir mes critères');
-        }}
-        onRefresh={() => loadDateIdeas()}
-        onEnableNotifications={() => console.log('Notifications activées')}
-        onOpenSettings={() => console.log('Ouverture des réglages')}
-        onExpandRadius={() => {
-          console.log('Étendre le rayon de recherche');
-          loadDateIdeas();
+        onViewMatches={() => {
+          navigation.navigate('Match', { matches });
+          setEndVisible(false);
         }}
         onClose={() => setEndVisible(false)}
       />
