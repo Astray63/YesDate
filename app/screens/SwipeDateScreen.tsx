@@ -17,6 +17,7 @@ import { NavigationProps, DateIdea } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
 import DateCardModal from '../components/DateCardModal';
 import EndOfSwipesOverlay from '../components/EndOfSwipesOverlay';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.9;
@@ -56,6 +57,17 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
   const nextCardScale = useRef(new Animated.Value(0.95)).current;
   const nextCardOpacity = useRef(new Animated.Value(0.7)).current;
 
+  // Measure the cards container to center cards precisely on all devices
+  const [containerWidth, setContainerWidth] = useState(screenWidth);
+  const [containerHeight, setContainerHeight] = useState(CARD_HEIGHT);
+
+  const centeredCardBaseStyle = React.useMemo(() => {
+    // Center the card perfectly within the container
+    return {
+      left: (containerWidth - CARD_WIDTH) / 2,
+      top: Math.max(0, (containerHeight - CARD_HEIGHT) / 2),
+    };
+  }, [containerWidth, containerHeight]);
   const currentCard = dates[currentCardIndex];
   const nextCard = dates[currentCardIndex + 1];
   const isLastCard = currentCardIndex >= dates.length - 1;
@@ -298,6 +310,21 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     return gradientMap[category] || '#f04299';
   };
 
+  // Softer, modern gradients used for card backgrounds
+  const getCategoryGradientColors = (category: string): [string, string] => {
+    const map: { [key: string]: [string, string] } = {
+      romantic: ['#FFE1EC', '#FFC2D9'],
+      fun: ['#FFF4C4', '#FFE89A'],
+      relaxed: ['#E6FBEA', '#CFF6D8'],
+      adventurous: ['#FFE1CC', '#FFC8A3'],
+      food: ['#FFE1E1', '#FFCACA'],
+      nature: ['#E0FBF7', '#C8F3ED'],
+      culture: ['#E9FBF2', '#D1F6E5'],
+      sport: ['#FFE4E8', '#FFC8D1'],
+    };
+    return map[category] || ['#FBE7F1', '#F7D2E6'];
+  };
+
   const getCategoryPattern = (category: string) => {
     // Return decorative elements based on category
     const patterns: { [key: string]: JSX.Element } = {
@@ -323,15 +350,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     return locationMap[locationType] || locationType;
   };
 
-  // Composant visuel simple inspiré de l'image
-  const DateVisual = ({ card, style }: { card: DateIdea; style: any }) => {
-    return (
-      <View style={[style, { position: 'relative' }]}>
-        {/* Fond simple et épuré */}
-        <View style={styles.simpleBackground} />
-      </View>
-    );
-  };
+  // (Old DateVisual removed — replaced by gradient-based design)
 
   if (loading) {
     return (
@@ -389,12 +408,19 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
       </View>
 
       {/* Cards Container */}
-      <View style={styles.cardsContainer}>
+      <View
+        style={styles.cardsContainer}
+        onLayout={(e) => {
+          setContainerWidth(e.nativeEvent.layout.width);
+          setContainerHeight(e.nativeEvent.layout.height);
+        }}
+      >
         {/* Next card preview */}
         {nextCard && (
           <Animated.View
             style={[
               styles.card,
+              centeredCardBaseStyle,
               styles.backgroundCard,
               {
                 transform: [
@@ -405,41 +431,39 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
               },
             ]}
           >
-            {/* Design simple pour l'aperçu */}
-            <View style={styles.simpleCardDesign}>
-              {/* Section visuelle simple */}
-              <DateVisual card={nextCard} style={styles.imageSection} />
-
-              {/* Catégorie centrée en haut */}
-              <View style={styles.categorySectionTop}>
-                <Text style={styles.categoryTextTop}>{getCategoryLabel(nextCard.category).toUpperCase()}</Text>
+            <LinearGradient
+              colors={getCategoryGradientColors(nextCard.category)}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.cardInner}
+            >
+              <View style={styles.topRow}>
+                <View style={styles.categoryChip}>
+                  <Text style={styles.categoryChipText}>
+                    {getCategoryEmoji(nextCard.category)} {getCategoryLabel(nextCard.category)}
+                  </Text>
+                </View>
               </View>
 
-              {/* Titre principal au centre */}
-              <View style={styles.mainTitleSection}>
-                <Text style={styles.mainTitleText}>{nextCard.title}</Text>
-              </View>
-
-              {/* Description */}
-              <View style={styles.descriptionSection}>
-                <Text style={styles.descriptionText}>
+              <View style={styles.centerBlock}>
+                <Text style={styles.titleText}>{nextCard.title}</Text>
+                <Text style={styles.subtitleText} numberOfLines={3}>
                   {nextCard.description}
                 </Text>
               </View>
 
-              {/* Informations sans icônes */}
-              <View style={styles.bottomInfoSection}>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoText}>{getCostLabel(nextCard.cost || 'moderate')}</Text>
+              <View style={styles.bottomRow}>
+                <View style={styles.infoChip}>
+                  <Text style={styles.infoChipText}>{getCostLabel(nextCard.cost || 'moderate')}</Text>
                 </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoText}>{getLocationTypeLabel(nextCard.location_type || 'city')}</Text>
+                <View style={styles.infoChip}>
+                  <Text style={styles.infoChipText}>{getLocationTypeLabel(nextCard.location_type || 'city')}</Text>
                 </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoText}>{nextCard.area ? `${nextCard.area} km` : '5 km'}</Text>
+                <View style={styles.infoChip}>
+                  <Text style={styles.infoChipText}>{nextCard.area ? `${nextCard.area} km` : '5 km'}</Text>
                 </View>
               </View>
-            </View>
+            </LinearGradient>
           </Animated.View>
         )}
 
@@ -452,6 +476,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
           <Animated.View
             style={[
               styles.card,
+              centeredCardBaseStyle,
               {
                 transform: [
                   { translateX },
@@ -463,39 +488,40 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
               },
             ]}
           >
-            <Pressable style={styles.simpleCardDesign} onPress={handleCardPress}>
-              {/* Section visuelle simple */}
-              <DateVisual card={currentCard} style={styles.imageSection} />
-
-              {/* Catégorie centrée en haut */}
-              <View style={styles.categorySectionTop}>
-                <Text style={styles.categoryTextTop}>{getCategoryLabel(currentCard.category).toUpperCase()}</Text>
-              </View>
-
-              {/* Titre principal au centre */}
-              <View style={styles.mainTitleSection}>
-                <Text style={styles.mainTitleText}>{currentCard.title}</Text>
-              </View>
-
-              {/* Description */}
-              <View style={styles.descriptionSection}>
-                <Text style={styles.descriptionText}>
-                  {currentCard.description}
-                </Text>
-              </View>
-
-              {/* Informations sans icônes */}
-              <View style={styles.bottomInfoSection}>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoText}>{getCostLabel(currentCard.cost || 'moderate')}</Text>
+            <Pressable style={styles.cardPressable} onPress={handleCardPress}>
+              <LinearGradient
+                colors={getCategoryGradientColors(currentCard.category)}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.cardInner}
+              >
+                <View style={styles.topRow}>
+                  <View style={styles.categoryChip}>
+                    <Text style={styles.categoryChipText}>
+                      {getCategoryEmoji(currentCard.category)} {getCategoryLabel(currentCard.category)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoText}>{getLocationTypeLabel(currentCard.location_type || 'city')}</Text>
+
+                <View style={styles.centerBlock}>
+                  <Text style={styles.titleText}>{currentCard.title}</Text>
+                  <Text style={styles.subtitleText} numberOfLines={3}>
+                    {currentCard.description}
+                  </Text>
                 </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoText}>{currentCard.area ? `${currentCard.area} km` : '5 km'}</Text>
+
+                <View style={styles.bottomRow}>
+                  <View style={styles.infoChip}>
+                    <Text style={styles.infoChipText}>{getCostLabel(currentCard.cost || 'moderate')}</Text>
+                  </View>
+                  <View style={styles.infoChip}>
+                    <Text style={styles.infoChipText}>{getLocationTypeLabel(currentCard.location_type || 'city')}</Text>
+                  </View>
+                  <View style={styles.infoChip}>
+                    <Text style={styles.infoChipText}>{currentCard.area ? `${currentCard.area} km` : '5 km'}</Text>
+                  </View>
                 </View>
-              </View>
+              </LinearGradient>
             </Pressable>
           </Animated.View>
         </PanGestureHandler>
@@ -581,6 +607,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    paddingHorizontal: theme.spacing.md,
   },
   card: {
     width: CARD_WIDTH,
@@ -617,9 +644,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
-    gap: 100,
-    marginTop: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    gap: 80,
+    marginTop: theme.spacing.md,
   },
   actionButton: {
     width: 70,
@@ -998,5 +1026,76 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     fontWeight: '500' as any,
+  },
+
+  // Redesigned card styles
+  cardPressable: {
+    flex: 1,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+  },
+  cardInner: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
+    justifyContent: 'space-between',
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  categoryChip: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: theme.borderRadius.full,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+    alignSelf: 'flex-start',
+  },
+  categoryChipText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: '700' as any,
+    color: '#1a1a1a',
+    letterSpacing: 0.3,
+  },
+  centerBlock: {
+    paddingHorizontal: theme.spacing.sm,
+    alignItems: 'center',
+  },
+  titleText: {
+    fontSize: theme.fonts.sizes['3xl'],
+    fontWeight: '800' as any,
+    color: '#1a1a1a',
+    textAlign: 'center',
+    lineHeight: 36,
+    marginBottom: theme.spacing.sm,
+  },
+  subtitleText: {
+    fontSize: theme.fonts.sizes.md,
+    color: '#333333',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  infoChip: {
+    flexShrink: 1,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: theme.borderRadius.full,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+  },
+  infoChipText: {
+    fontSize: 14,
+    color: '#1a1a1a',
+    fontWeight: '600' as any,
   },
 });

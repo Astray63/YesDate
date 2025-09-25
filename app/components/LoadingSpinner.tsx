@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Dimensions,
   Easing,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../utils/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -21,137 +22,197 @@ interface LoadingSpinnerProps {
 
 export default function LoadingSpinner({
   loadingSteps = [
-    "Analyse de vos préférences...",
-    "Recherche d'idées personnalisées...",
-    "Génération des suggestions...",
-    "Finalisation des recommandations..."
+    "✨ Analyse de vos préférences romantiques",
+    "💕 Recherche des lieux les plus enchanteurs",
+    "🌟 Création d'expériences sur mesure",
+    "🎭 Personnalisation selon vos goûts",
+    "💎 Sélection des meilleures suggestions",
+    "🎉 Finalisation de votre sélection parfaite",
+    "🌹 Ajout de la touche magique finale"
   ],
   currentStep = 0,
   showProgress = true,
   size = 'large',
   message
 }: LoadingSpinnerProps) {
-  // Animations natives uniquement
-  const [pulseAnim] = useState(new Animated.Value(1));
-  const [rotateAnim] = useState(new Animated.Value(0));
-  const [fadeAnim] = useState(new Animated.Value(1));
   
-  // Animations JavaScript uniquement
-  const [progressAnim] = useState(new Animated.Value(0));
-  const [colorAnim] = useState(new Animated.Value(0));
-  
+  // États pour les animations
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Valeurs d'animation natives (useNativeDriver: false)
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const pulseValue = useRef(new Animated.Value(1)).current;
+  const messageOpacity = useRef(new Animated.Value(1)).current;
+  const messageTranslateY = useRef(new Animated.Value(0)).current;
+  const particleValue = useRef(new Animated.Value(0)).current;
+  const breatheValue = useRef(new Animated.Value(1)).current;
+  
+  // Valeurs d'animation JavaScript (useNativeDriver: false)
+  const progressValue = useRef(new Animated.Value(0)).current;
+  const glowValue = useRef(new Animated.Value(0)).current;
 
-  // Animation de pulsation (native)
+  // Animation de rotation principale
   useEffect(() => {
-    const pulseAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0.9,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 800,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    pulseAnimation.start();
-    return () => pulseAnimation.stop();
-  }, [pulseAnim]);
-
-  // Animation de rotation (native)
-  useEffect(() => {
-    const rotationAnimation = Animated.loop(
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 2000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    );
-
-    rotationAnimation.start();
-    return () => rotationAnimation.stop();
-  }, [rotateAnim]);
-
-  // Animation de fondu (native)
-  useEffect(() => {
-    const fadeAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 0.7,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    fadeAnimation.start();
-    return () => fadeAnimation.stop();
-  }, [fadeAnim]);
-
-  // Animation de progression (JavaScript)
-  useEffect(() => {
-    const progressAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(progressAnim, {
-          toValue: 1,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-        Animated.timing(progressAnim, {
-          toValue: 0,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-      ])
-    );
-
-    progressAnimation.start();
-    return () => progressAnimation.stop();
-  }, [progressAnim]);
-
-  // Animation de couleur (JavaScript)
-  useEffect(() => {
-    const colorAnimation = Animated.loop(
-      Animated.timing(colorAnim, {
+    const spinAnimation = Animated.loop(
+      Animated.timing(spinValue, {
         toValue: 1,
         duration: 3000,
         easing: Easing.linear,
         useNativeDriver: false,
       })
     );
+    spinAnimation.start();
+    return () => spinAnimation.stop();
+  }, []);
 
-    colorAnimation.start();
-    return () => colorAnimation.stop();
-  }, [colorAnim]);
+  // Animation de pulsation
+  useEffect(() => {
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseValue, {
+          toValue: 1.1,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulseValue, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    pulseAnimation.start();
+    return () => pulseAnimation.stop();
+  }, []);
 
-  // Animation des messages
+  // Animation de respiration pour l'effet de glow
+  useEffect(() => {
+    const breatheAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breatheValue, {
+          toValue: 1.15,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.timing(breatheValue, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    breatheAnimation.start();
+    return () => breatheAnimation.stop();
+  }, []);
+
+  // Animation de l'effet glow (tout en natif pour éviter le mix JS/native sur le même noeud)
+  useEffect(() => {
+    const glowAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowValue, {
+          toValue: 1,
+          duration: 2500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.timing(glowValue, {
+          toValue: 0,
+          duration: 2500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    glowAnimation.start();
+    return () => glowAnimation.stop();
+  }, []);
+
+  // Animation des particules
+  useEffect(() => {
+    const particleAnimation = Animated.loop(
+      Animated.timing(particleValue, {
+        toValue: 1,
+        duration: 4000,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      })
+    );
+    particleAnimation.start();
+    return () => particleAnimation.stop();
+  }, []);
+
+  // Animation de progression fluide
+  useEffect(() => {
+    const progressAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(progressValue, {
+          toValue: 1,
+          duration: 3000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.timing(progressValue, {
+          toValue: 0,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    progressAnimation.start();
+    return () => progressAnimation.stop();
+  }, []);
+
+  // Transition fluide des messages
+  const transitionToNextMessage = () => {
+    setIsTransitioning(true);
+    
+    Animated.parallel([
+      Animated.timing(messageOpacity, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: false,
+      }),
+      Animated.timing(messageTranslateY, {
+        toValue: -20,
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: false,
+      }),
+    ]).start(() => {
+      setCurrentMessageIndex((prev) => (prev + 1) % loadingSteps.length);
+      messageTranslateY.setValue(20);
+      
+      Animated.parallel([
+        Animated.timing(messageOpacity, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.timing(messageTranslateY, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.out(Easing.back(1.2)),
+          useNativeDriver: false,
+        }),
+      ]).start(() => {
+        setIsTransitioning(false);
+      });
+    });
+  };
+
+  // Gestion du changement de messages
   useEffect(() => {
     if (loadingSteps.length > 1) {
       const messageInterval = setInterval(() => {
-        setCurrentMessageIndex((prev) => (prev + 1) % loadingSteps.length);
+        transitionToNextMessage();
       }, 2000);
 
       return () => clearInterval(messageInterval);
@@ -160,139 +221,228 @@ export default function LoadingSpinner({
 
   const getSize = () => {
     switch (size) {
-      case 'small': return 40;
-      case 'medium': return 60;
-      case 'large': return 80;
-      default: return 80;
-    }
-  };
-
-  const getFontSize = () => {
-    switch (size) {
-      case 'small': return theme.fonts.sizes.sm;
-      case 'medium': return theme.fonts.sizes.md;
-      case 'large': return theme.fonts.sizes.lg;
-      default: return theme.fonts.sizes.lg;
+      case 'small': return 60;
+      case 'medium': return 80;
+      case 'large': return 100;
+      default: return 100;
     }
   };
 
   const spinnerSize = getSize();
-  const fontSize = getFontSize();
-
-  const rotateInterpolate = rotateAnim.interpolate({
+  
+  const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
 
-  const progressWidth = progressAnim.interpolate({
+  const progressWidth = progressValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, screenWidth * 0.6],
+    outputRange: [0, screenWidth * 0.7],
   });
 
-  // Couleur statique pour éviter les conflits
-  const primaryColor = theme.colors.primary;
+  const glowOpacity = glowValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.8],
+  });
 
   const displayMessage = message || loadingSteps[currentMessageIndex] || loadingSteps[0];
 
   return (
     <View style={styles.container}>
-      {/* Spinner principal */}
+      {/* Effet de fond avec dégradé */}
+      <LinearGradient
+        colors={['rgba(255, 107, 157, 0.05)', 'rgba(255, 107, 157, 0.02)', 'transparent']}
+        style={styles.backgroundGradient}
+      />
+
+      {/* Particules flottantes */}
+      <View style={styles.particlesContainer}>
+        {[...Array(6)].map((_, index) => (
+          <Animated.View
+            key={index}
+            style={[
+              styles.particle,
+              {
+                left: `${15 + index * 12}%`,
+                top: `${20 + (index % 3) * 25}%`,
+                transform: [
+                  {
+                    translateY: particleValue.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, -30 - index * 5],
+                    }),
+                  },
+                  {
+                    scale: particleValue.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: [0, 1, 0],
+                    }),
+                  },
+                ],
+                opacity: particleValue.interpolate({
+                  inputRange: [0, 0.3, 0.7, 1],
+                  outputRange: [0, 0.8, 0.8, 0],
+                }),
+              },
+            ]}
+          >
+            <Text style={styles.particleEmoji}>
+              {['✨', '💫', '⭐', '🌟', '💎', '🔮'][index]}
+            </Text>
+          </Animated.View>
+        ))}
+      </View>
+
+      {/* Conteneur principal du spinner */}
       <View style={styles.spinnerContainer}>
+        {/* Effet de glow animé */}
+        <Animated.View
+          style={[
+            styles.glowEffect,
+            {
+              width: spinnerSize + 40,
+              height: spinnerSize + 40,
+              opacity: glowOpacity,
+              transform: [{ scale: breatheValue }],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={['rgba(255, 107, 157, 0.4)', 'rgba(255, 107, 157, 0.1)', 'transparent']}
+            style={styles.glowGradient}
+          />
+        </Animated.View>
+
+        {/* Spinner principal */}
         <Animated.View
           style={[
             styles.spinner,
             {
               width: spinnerSize,
               height: spinnerSize,
-              borderRadius: spinnerSize / 2,
               transform: [
-                { rotate: rotateInterpolate },
-                { scale: pulseAnim }
+                { rotate: spin },
+                { scale: pulseValue },
               ],
             },
           ]}
         >
-          {/* Cercles concentriques */}
-          <View style={[styles.spinnerRing, styles.ring1]} />
-          <View style={[styles.spinnerRing, styles.ring2]} />
-          <View style={[styles.spinnerRing, styles.ring3]} />
-
-          {/* Centre du spinner */}
-          <View style={[styles.spinnerCenter, { backgroundColor: primaryColor }]}>
-            <Text style={styles.centerIcon}>✨</Text>
-          </View>
+          <LinearGradient
+            colors={['#ff6b9d', '#ff8fab', '#ffb3c1']}
+            style={styles.spinnerGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            {/* Anneaux concentriques */}
+            <View style={[styles.ring, styles.outerRing]} />
+            <View style={[styles.ring, styles.middleRing]} />
+            <View style={[styles.ring, styles.innerRing]} />
+            
+            {/* Centre du spinner */}
+            <View style={styles.spinnerCenter}>
+              <LinearGradient
+                colors={['#ffffff', '#f8f9fa']}
+                style={styles.centerGradient}
+              >
+                <Text style={styles.centerIcon}>💕</Text>
+              </LinearGradient>
+            </View>
+          </LinearGradient>
         </Animated.View>
       </View>
 
-      {/* Message de chargement */}
+      {/* Message de chargement avec transition */}
       <View style={styles.messageContainer}>
-        <Animated.Text
+        <Animated.View
           style={[
-            styles.loadingMessage,
+            styles.messageWrapper,
             {
-              fontSize,
-              opacity: fadeAnim,
-              color: primaryColor,
+              opacity: messageOpacity,
+              transform: [{ translateY: messageTranslateY }],
             },
           ]}
         >
-          {displayMessage}
-        </Animated.Text>
+          <Text style={styles.loadingMessage}>
+            {displayMessage}
+          </Text>
+        </Animated.View>
 
-        {/* Indicateur de progression */}
+        {/* Indicateur de progression sophistiqué */}
         {showProgress && (
           <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
+            <View style={styles.progressTrack}>
+              <Animated.View style={styles.progressBackground}>
+                <LinearGradient
+                  colors={['rgba(255, 107, 157, 0.1)', 'rgba(255, 107, 157, 0.05)']}
+                  style={styles.progressBackgroundGradient}
+                />
+              </Animated.View>
+              
               <Animated.View
                 style={[
-                  styles.progressFill,
+                  styles.progressBar,
                   {
                     width: progressWidth,
-                    backgroundColor: primaryColor,
                   },
                 ]}
-              />
-              {/* Effet de brillance sur la barre de progression */}
-              <Animated.View
-                style={[
-                  styles.progressShimmer,
-                  {
-                    opacity: progressAnim.interpolate({
-                      inputRange: [0, 0.5, 1],
-                      outputRange: [0, 0.8, 0],
-                    }),
-                  },
-                ]}
-              />
+              >
+                <LinearGradient
+                  colors={['#ff6b9d', '#ff8fab', '#ffb3c1']}
+                  style={styles.progressGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                />
+                
+                {/* Effet de brillance */}
+                <Animated.View
+                  style={[
+                    styles.progressShimmer,
+                    {
+                      opacity: progressValue.interpolate({
+                        inputRange: [0, 0.5, 1],
+                        outputRange: [0, 1, 0],
+                      }),
+                    },
+                  ]}
+                />
+              </Animated.View>
             </View>
-            <Text style={[styles.progressText, { color: primaryColor }]}>
-              {Math.round((currentStep / loadingSteps.length) * 100)}%
+            
+            <Text style={styles.progressText}>
+              Création en cours...
             </Text>
           </View>
         )}
       </View>
 
-      {/* Points de suspension animés */}
+      {/* Points décoratifs animés */}
       <View style={styles.dotsContainer}>
         {[0, 1, 2].map((index) => (
           <Animated.View
             key={index}
             style={[
-              styles.dot,
+              styles.decorativeDot,
               {
-                backgroundColor: primaryColor,
-                opacity: fadeAnim,
+                opacity: pulseValue.interpolate({
+                  inputRange: [1, 1.1],
+                  outputRange: [0.6, 1],
+                }),
                 transform: [
                   {
-                    scale: pulseAnim.interpolate({
-                      inputRange: [0.9, 1, 1.2],
-                      outputRange: [0.8, 1, 1.2],
+                    scale: pulseValue.interpolate({
+                      inputRange: [1, 1.1],
+                      outputRange: [0.8, 1.2],
                     }),
                   },
                 ],
               },
             ]}
-          />
+          >
+            <LinearGradient
+              colors={['#ff6b9d', '#ffb3c1']}
+              style={styles.dotGradient}
+            />
+          </Animated.View>
         ))}
       </View>
     </View>
@@ -304,85 +454,164 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.backgroundLight,
-    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: '#fafbfc',
+    paddingHorizontal: theme.spacing.xl,
+    position: 'relative',
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  particlesContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+  },
+  particle: {
+    position: 'absolute',
+  },
+  particleEmoji: {
+    fontSize: 16,
+    opacity: 0.7,
   },
   spinnerContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.xl * 2,
+    position: 'relative',
+  },
+  glowEffect: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  glowGradient: {
+    flex: 1,
+    borderRadius: 999,
   },
   spinner: {
-    position: 'relative',
+    borderRadius: 999,
+    shadowColor: '#ff6b9d',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  spinnerGradient: {
+    flex: 1,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.lg,
+    position: 'relative',
   },
-  spinnerRing: {
+  ring: {
     position: 'absolute',
-    borderWidth: 3,
-    borderColor: 'transparent',
     borderRadius: 999,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  ring1: {
-    width: '100%',
-    height: '100%',
-    borderTopColor: theme.colors.primary,
-    borderRightColor: theme.colors.primary + '40',
+  outerRing: {
+    width: '90%',
+    height: '90%',
+    borderTopColor: 'rgba(255, 255, 255, 0.8)',
+    borderRightColor: 'rgba(255, 255, 255, 0.6)',
   },
-  ring2: {
-    width: '80%',
-    height: '80%',
-    borderTopColor: theme.colors.primary + '60',
-    borderRightColor: theme.colors.primary + '20',
+  middleRing: {
+    width: '70%',
+    height: '70%',
+    borderTopColor: 'rgba(255, 255, 255, 0.6)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.4)',
   },
-  ring3: {
-    width: '60%',
-    height: '60%',
-    borderTopColor: theme.colors.primary + '80',
-    borderRightColor: theme.colors.primary + '10',
+  innerRing: {
+    width: '50%',
+    height: '50%',
+    borderBottomColor: 'rgba(255, 255, 255, 0.8)',
+    borderRightColor: 'rgba(255, 255, 255, 0.5)',
   },
   spinnerCenter: {
-    width: '40%',
-    height: '40%',
+    width: '35%',
+    height: '35%',
     borderRadius: 999,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  centerGradient: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.md,
   },
   centerIcon: {
-    fontSize: 16,
-    color: '#ffffff',
+    fontSize: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   messageContainer: {
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
+    minHeight: 80,
+  },
+  messageWrapper: {
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
   },
   loadingMessage: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: '600' as any,
-    color: theme.colors.textLight,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2c3e50',
     textAlign: 'center',
-    marginBottom: theme.spacing.md,
-    lineHeight: 24,
+    lineHeight: 26,
+    letterSpacing: 0.3,
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   progressContainer: {
     alignItems: 'center',
     width: '100%',
+    marginTop: theme.spacing.lg,
+  },
+  progressTrack: {
+    width: screenWidth * 0.7,
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: theme.spacing.sm,
+  },
+  progressBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  progressBackgroundGradient: {
+    flex: 1,
   },
   progressBar: {
-    width: screenWidth * 0.6,
-    height: 4,
-    backgroundColor: theme.colors.borderLight,
-    borderRadius: 2,
-    marginBottom: theme.spacing.xs,
+    height: '100%',
+    borderRadius: 3,
     overflow: 'hidden',
     position: 'relative',
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-    backgroundColor: theme.colors.primary,
+  progressGradient: {
+    flex: 1,
   },
   progressShimmer: {
     position: 'absolute',
@@ -390,23 +619,27 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   progressText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.mutedLight,
-    fontWeight: '500' as any,
+    fontSize: 14,
+    color: '#7f8c8d',
+    fontWeight: '500',
+    letterSpacing: 0.2,
+    fontStyle: 'italic',
   },
   dotsContainer: {
     flexDirection: 'row',
-    gap: theme.spacing.xs,
-    marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.lg,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.primary,
+  decorativeDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  dotGradient: {
+    flex: 1,
   },
 });
