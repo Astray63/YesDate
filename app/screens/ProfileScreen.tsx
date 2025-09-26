@@ -48,9 +48,16 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
   const requestPermissions = async () => {
     if (Platform.OS !== 'web') {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Camera roll permissions are required to change your avatar.');
+      // Demander les permissions pour la galerie
+      const galleryStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (galleryStatus.status !== 'granted') {
+        Alert.alert('Permission requise', 'Les permissions de la galerie sont nécessaires pour changer votre avatar.');
+      }
+
+      // Demander les permissions pour l'appareil photo
+      const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
+      if (cameraStatus.status !== 'granted') {
+        Alert.alert('Permission requise', 'Les permissions de l\'appareil photo sont nécessaires pour prendre des photos.');
       }
     }
   };
@@ -105,28 +112,73 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
   const handleImagePicker = async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
+      Alert.alert(
+        'Changer l\'avatar',
+        'Comment voulez-vous sélectionner votre photo ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: '📷 Appareil photo',
+            onPress: async () => {
+              const cameraResult = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+              });
 
-      if (!result.canceled) {
-        // Ici on pourrait uploader l'image vers Supabase Storage
-        // Pour l'instant, on simule juste le changement d'avatar
-        setUserProfile((prev: any) => ({
-          ...prev,
-          avatar_url: result.assets[0].uri
-        }));
-        setEditingProfile((prev: any) => ({
-          ...prev,
-          avatar_url: result.assets[0].uri
-        }));
-      }
+              if (!cameraResult.canceled && cameraResult.assets[0]) {
+                await updateAvatar(cameraResult.assets[0].uri);
+              }
+            }
+          },
+          {
+            text: '🖼️ Galerie',
+            onPress: async () => {
+              const galleryResult = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+              });
+
+              if (!galleryResult.canceled && galleryResult.assets[0]) {
+                await updateAvatar(galleryResult.assets[0].uri);
+              }
+            }
+          },
+        ]
+      );
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert('Erreur', 'Impossible de sélectionner l\'image');
+    }
+  };
+
+  const updateAvatar = async (imageUri: string) => {
+    try {
+      // Mettre à jour l'avatar localement
+      setUserProfile((prev: any) => ({
+        ...prev,
+        avatar_url: imageUri
+      }));
+
+      setEditingProfile((prev: any) => ({
+        ...prev,
+        avatar_url: imageUri
+      }));
+
+      // Sauvegarder automatiquement dans Supabase
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        await authService.updateUserProfile(currentUser.id, {
+          avatar_url: imageUri,
+        });
+        console.log('✅ Avatar mis à jour avec succès');
+        Alert.alert('Succès', 'Votre avatar a été mis à jour !');
+      }
+    } catch (saveError) {
+      console.error('Erreur lors de la sauvegarde:', saveError);
+      Alert.alert('Info', 'Avatar changé localement. Il sera sauvegardé lors de la prochaine synchronisation.');
     }
   };
 
@@ -241,10 +293,10 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Section */}
         <View style={styles.profileSection}>
-          <View style={styles.avatarContainer}>
+          <TouchableOpacity style={styles.avatarContainer} onPress={handleImagePicker}>
             <Image
               source={{
-                uri: userProfile?.avatar_url || 'https://via.placeholder.com/120x120/FF6B9D/FFFFFF?text=👤',
+                uri: userProfile?.avatar_url || 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
               }}
               style={styles.avatar}
               resizeMode="cover"
@@ -252,7 +304,10 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             <View style={styles.levelBadge}>
               <Text style={styles.levelEmoji}>⭐</Text>
             </View>
-          </View>
+            <View style={styles.editAvatarOverlay}>
+              <Text style={styles.editAvatarText}>📷</Text>
+            </View>
+          </TouchableOpacity>
 
           <View style={styles.profileInfo}>
             <Text style={styles.userName}>
@@ -527,6 +582,23 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
+  },
+  editAvatarOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 36,
+    height: 36,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: theme.colors.backgroundLight,
+  },
+  editAvatarText: {
+    fontSize: 16,
+    color: '#ffffff',
   },
   levelBadge: {
     position: 'absolute',
