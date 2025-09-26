@@ -21,7 +21,6 @@ import QuizScreen from '../screens/QuizScreen';
 import SwipeDateScreen from '../screens/SwipeDateScreen';
 import MatchScreen from '../screens/MatchScreen';
 import GamificationScreen from '../screens/GamificationScreen';
-import CommunityScreen from '../screens/CommunityScreen';
 
 import MainTabNavigator from './MainTabNavigator';
 
@@ -92,11 +91,6 @@ export default function AuthNavigator() {
             <Stack.Screen
               name="Gamification"
               component={GamificationScreen}
-              options={{ presentation: 'modal' }}
-            />
-            <Stack.Screen
-              name="Community"
-              component={CommunityScreen}
               options={{ presentation: 'modal' }}
             />
             <Stack.Screen name="Room" component={RoomScreen} />

@@ -1,11 +1,10 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Heart, Lightbulb, Trophy, Search } from 'lucide-react-native';
+import { Heart, Trophy, Search } from 'lucide-react-native';
 
 // Screens
 import SwipeDateScreen from '../screens/SwipeDateScreen';
 import MatchScreen from '../screens/MatchScreen';
-import CommunityScreen from '../screens/CommunityScreen';
 import GamificationScreen from '../screens/GamificationScreen';
 
 import { theme } from '../utils/theme';
@@ -67,20 +66,6 @@ export default function MainTabNavigator() {
           tabBarLabel: 'Matchs',
           tabBarIcon: ({ color, focused }) => (
             <Heart 
-              size={focused ? 22 : 18} 
-              color={color} 
-              strokeWidth={focused ? 2.5 : 2}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Community"
-        component={CommunityScreen}
-        options={{
-          tabBarLabel: 'Inspiration',
-          tabBarIcon: ({ color, focused }) => (
-            <Lightbulb 
               size={focused ? 22 : 18} 
               color={color} 
               strokeWidth={focused ? 2.5 : 2}

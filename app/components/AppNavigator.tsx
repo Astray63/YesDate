@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, Heart, Lightbulb, Trophy, Search } from 'lucide-react-native';
+import { Home, Heart, Trophy, Search } from 'lucide-react-native';
 
 // Screens
 import WelcomeScreen from '../screens/WelcomeScreen';
@@ -13,7 +13,6 @@ import QuizScreen from '../screens/QuizScreen';
 import SwipeDateScreen from '../screens/SwipeDateScreen';
 import MatchScreen from '../screens/MatchScreen';
 import GamificationScreen from '../screens/GamificationScreen';
-import CommunityScreen from '../screens/CommunityScreen';
 
 import { theme } from '../utils/theme';
 
@@ -89,20 +88,6 @@ function MainTabNavigator() {
           tabBarLabel: 'Matchs',
           tabBarIcon: ({ color, focused }) => (
             <Heart 
-              size={focused ? 22 : 18} 
-              color={color} 
-              strokeWidth={focused ? 2.5 : 2}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Community"
-        component={CommunityScreen}
-        options={{
-          tabBarLabel: 'Inspiration',
-          tabBarIcon: ({ color, focused }) => (
-            <Lightbulb 
               size={focused ? 22 : 18} 
               color={color} 
               strokeWidth={focused ? 2.5 : 2}

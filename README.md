@@ -7,8 +7,6 @@ Une application mobile React Native avec Expo qui aide les couples à découvrir
 - **Quiz interactif** : Questions rapides avec emojis pour déterminer les préférences
 - **Swipe Tinder-like** : Interface de carte pour liker/rejeter les idées de dates
 - **Matching intelligent** : Voir les dates où les deux partenaires ont matché
-- **Gamification** : Système de badges et défis pour couples
-- **Inspiration communauté** : Idées partagées par d'autres couples
 - **IA personnalisée** : Génération d'idées via OpenRouter API
 - **Authentification** : Inscription/connexion avec codes d'invitation pour couples
 
@@ -174,7 +172,6 @@ Le backend sera disponible sur `http://localhost:3000`
 3. **Quiz** : Répondez aux 5 questions sur vos préférences
 4. **Swipe** : Glissez droite pour liker, gauche pour rejeter les idées de dates
 5. **Matches** : Consultez les dates que vous et votre partenaire avez likées
-6. **Gamification** : Déverrouillez des badges et relevez des défis
 
 ## 🏗️ Architecture
 
@@ -188,9 +185,7 @@ YesDateApp/
 │   │   ├── AuthScreen.tsx
 │   │   ├── QuizScreen.tsx
 │   │   ├── SwipeDateScreen.tsx
-│   │   ├── MatchScreen.tsx
-│   │   ├── GamificationScreen.tsx
-│   │   └── CommunityScreen.tsx
+│   │   └── GamificationScreen.tsx
 │   ├── services/           # Services API
 │   │   └── supabase.ts
 │   ├── types/              # Types TypeScript

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../utils/theme';
 import { NavigationProps, DateIdea } from '../types';
 import { authService } from '../services/supabase';
+import DateCardModal from '../components/DateCardModal';
 
 interface MatchScreenProps extends NavigationProps {
   route: {
@@ -27,6 +28,8 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
   const matches = route.params?.matches || [];
   const [resetting, setResetting] = useState(false);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<DateIdea | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Récupérer l'ID de la room actuelle depuis les paramètres de navigation ou le stockage local
   React.useEffect(() => {
@@ -65,6 +68,16 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
       console.error('Error adding date to todos:', error);
       Alert.alert('Erreur', 'Impossible d\'ajouter cette date à votre liste');
     }
+  };
+
+  const handleMatchPress = (match: DateIdea) => {
+    setSelectedMatch(match);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedMatch(null);
   };
 
   const handleResetProcess = async () => {
@@ -156,7 +169,12 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
         ) : (
           <View style={styles.matchesList}>
             {matches.map((match, index) => (
-              <View key={match.id} style={styles.matchCard}>
+              <TouchableOpacity
+                key={match.id}
+                style={styles.matchCard}
+                onPress={() => handleMatchPress(match)}
+                activeOpacity={0.7}
+              >
                 <View style={styles.matchContent}>
                   <View style={styles.matchTextContainer}>
                     <Text style={styles.matchLabel}>Match</Text>
@@ -166,14 +184,8 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
                         ? `${match.description.substring(0, 80)}...`
                         : match.description}
                     </Text>
-                    <TouchableOpacity
-                      style={styles.planButton}
-                      onPress={() => handlePlanDate(match)}
-                    >
-                      <Text style={styles.planButtonText}>Planifier</Text>
-                    </TouchableOpacity>
                   </View>
-                  
+
                   <View style={styles.matchImageContainer}>
                     <Image
                       source={{ uri: match.image_url }}
@@ -182,12 +194,19 @@ export default function MatchScreen({ navigation, route }: MatchScreenProps) {
                     />
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
 
       </ScrollView>
+
+      {/* Modal pour afficher les détails du match */}
+      <DateCardModal
+        visible={modalVisible}
+        onClose={handleCloseModal}
+        dateIdea={selectedMatch}
+      />
     </SafeAreaView>
   );
 }
@@ -300,19 +319,6 @@ const styles = StyleSheet.create({
     color: theme.colors.mutedLight,
     lineHeight: 18,
     marginBottom: theme.spacing.md,
-  },
-  planButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.full,
-    alignSelf: 'flex-start',
-    ...theme.shadows.sm,
-  },
-  planButtonText: {
-    color: '#ffffff',
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: '700' as any,
   },
   matchImageContainer: {
     flex: 1,
