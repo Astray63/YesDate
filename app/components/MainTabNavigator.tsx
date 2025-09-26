@@ -5,7 +5,7 @@ import { Heart, Trophy, Search } from 'lucide-react-native';
 // Screens
 import SwipeDateScreen from '../screens/SwipeDateScreen';
 import MatchScreen from '../screens/MatchScreen';
-import GamificationScreen from '../screens/GamificationScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 import { theme } from '../utils/theme';
 
@@ -75,7 +75,7 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="Profile"
-        component={GamificationScreen}
+        component={ProfileScreen}
         options={{
           tabBarLabel: 'Profil',
           tabBarIcon: ({ color, focused }) => (

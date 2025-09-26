@@ -12,7 +12,7 @@ import RoomScreen from '../screens/RoomScreen';
 import QuizScreen from '../screens/QuizScreen';
 import SwipeDateScreen from '../screens/SwipeDateScreen';
 import MatchScreen from '../screens/MatchScreen';
-import GamificationScreen from '../screens/GamificationScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 import { theme } from '../utils/theme';
 
@@ -97,7 +97,7 @@ function MainTabNavigator() {
       />
       <Tab.Screen
         name="Profile"
-        component={GamificationScreen}
+        component={ProfileScreen}
         options={{
           tabBarLabel: 'Profil',
           tabBarIcon: ({ color, focused }) => (
@@ -130,8 +130,8 @@ export default function AppNavigator() {
         <Stack.Screen name="Quiz" component={QuizScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
         <Stack.Screen
-          name="Gamification"
-          component={GamificationScreen}
+          name="Profile"
+          component={ProfileScreen}
           options={{ presentation: 'modal' }}
         />
       </Stack.Navigator>

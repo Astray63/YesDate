@@ -45,7 +45,7 @@ export default function WelcomeScreen({ navigation }: WelcomeScreenProps) {
         <View style={styles.bottomSection}>
           <TouchableOpacity
             style={styles.startButton}
-            onPress={() => navigation.navigate('ModeChoice')}
+            onPress={() => navigation.navigate('Auth')}
             activeOpacity={0.9}
           >
             <Text style={styles.buttonText}>Trouve ta sortie</Text>

@@ -746,6 +746,27 @@ export const authService = {
     }
   },
 
+  // Update user profile
+  async updateUserProfile(userId: string, updates: { full_name?: string; avatar_url?: string }) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  },
+
   // Generate date suggestions using AI (for solo mode)
   async generateAIDateSuggestions(answers: any, city: string, count: number = 20) {
     try {

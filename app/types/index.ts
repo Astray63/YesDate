@@ -130,5 +130,5 @@ export type RootStackParamList = {
   Room: { roomId?: string; city?: string };
   MainTab: undefined;
   Community: undefined;
-  Gamification: undefined;
+  Profile: undefined;
 };

@@ -185,7 +185,7 @@ YesDateApp/
 │   │   ├── AuthScreen.tsx
 │   │   ├── QuizScreen.tsx
 │   │   ├── SwipeDateScreen.tsx
-│   │   └── GamificationScreen.tsx
+│   │   └── ProfileScreen.tsx
 │   ├── services/           # Services API
 │   │   └── supabase.ts
 │   ├── types/              # Types TypeScript
