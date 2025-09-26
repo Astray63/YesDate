@@ -85,6 +85,24 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     loadDateIdeas();
   }, [isCoupleModeParam]);
 
+  // Réinitialiser l'état quand l'écran regagne le focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Réinitialiser l'état de fin de swipe sans toucher aux matchs existants
+      setEndVisible(false);
+      setCurrentCardIndex(0);
+      setSwipedCards({});
+
+      // Ne recharger les données que si on n'a vraiment plus de cartes à swiper
+      // (et pas juste parce qu'on revient de l'écran MatchScreen)
+      if (dates.length === 0 && matches.length === 0) {
+        loadDateIdeas();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, dates.length, matches.length]);
+
   // Animation d'entrée pour les cartes
   useEffect(() => {
     if (dates.length > 0 && !loading) {
@@ -326,7 +344,8 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
 
   // Fonction helper pour récupérer la police selon le mood
   const getMoodFontFamily = (category: string): string => {
-    return theme.fonts.moodFonts[category] || theme.fonts.display;
+    const moodFonts = theme.fonts.moodFonts as { [key: string]: string };
+    return moodFonts[category] || theme.fonts.display;
   };
 
   // Softer, modern gradients used for card backgrounds

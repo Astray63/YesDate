@@ -19,6 +19,7 @@ import { NavigationProps } from '../types';
 import { getAchievements } from '../utils/data';
 import { authService } from '../services/supabase';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ProfileScreenProps extends NavigationProps {}
 
@@ -69,8 +70,21 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       // Charger le profil utilisateur
       const currentUser = await authService.getCurrentUserWithProfile();
       if (currentUser) {
-        setUserProfile(currentUser.profile);
-        setEditingProfile(currentUser.profile);
+        // Récupérer l'avatar depuis AsyncStorage
+        let avatarUrl = null;
+        try {
+          const userKey = `avatar_${currentUser.user?.id}`;
+          avatarUrl = await AsyncStorage.getItem(userKey);
+        } catch (error) {
+          console.log('Aucun avatar sauvegardé localement');
+        }
+
+        const profileWithAvatar = {
+          ...currentUser.profile,
+          avatar_url: avatarUrl
+        };
+        setUserProfile(profileWithAvatar);
+        setEditingProfile(profileWithAvatar);
       }
 
       // Charger les succès
@@ -135,7 +149,6 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             text: '🖼️ Galerie',
             onPress: async () => {
               const galleryResult = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,
@@ -167,14 +180,18 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         avatar_url: imageUri
       }));
 
-      // Sauvegarder automatiquement dans Supabase
-      const currentUser = await authService.getCurrentUser();
-      if (currentUser) {
-        await authService.updateUserProfile(currentUser.id, {
-          avatar_url: imageUri,
-        });
-        console.log('✅ Avatar mis à jour avec succès');
-        Alert.alert('Succès', 'Votre avatar a été mis à jour !');
+      // Sauvegarder l'avatar localement avec AsyncStorage pour éviter la redirection
+      try {
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser) {
+          const userKey = `avatar_${currentUser.id}`;
+          await AsyncStorage.setItem(userKey, imageUri);
+          console.log('✅ Avatar sauvegardé localement avec succès');
+          Alert.alert('Succès', 'Votre avatar a été mis à jour !');
+        }
+      } catch (storageError) {
+        console.error('Erreur lors de la sauvegarde locale:', storageError);
+        // L'avatar reste affiché localement même si la sauvegarde échoue
       }
     } catch (saveError) {
       console.error('Erreur lors de la sauvegarde:', saveError);
@@ -186,10 +203,20 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     try {
       // Sauvegarder les modifications du profil
       if (editingProfile) {
+        // Mettre à jour le nom dans la table profiles
         await authService.updateUserProfile(editingProfile.id, {
           full_name: editingProfile.full_name,
-          avatar_url: editingProfile.avatar_url,
         });
+
+        // Sauvegarder l'avatar localement avec AsyncStorage
+        if (editingProfile.avatar_url) {
+          const currentUser = await authService.getCurrentUser();
+          if (currentUser) {
+            const userKey = `avatar_${currentUser.id}`;
+            await AsyncStorage.setItem(userKey, editingProfile.avatar_url);
+          }
+        }
+
         setUserProfile(editingProfile);
       }
       setEditModalVisible(false);
