@@ -190,9 +190,9 @@ export const getQuizQuestions = async (): Promise<QuizQuestion[]> => {
 };
 
 export const getDateIdeas = async (filters?: any): Promise<any[]> => {
-  // Retourner un tableau vide car la table date_ideas n'existe pas
-  // Les suggestions viennent uniquement de l'IA
-  return [];
+  // Utiliser les nouvelles fonctions de supabase
+  const { authService } = await import('../services/supabase');
+  return await authService.getDateIdeas(filters);
 };
 
 export const getAchievements = async (userId?: string): Promise<any[]> => {
