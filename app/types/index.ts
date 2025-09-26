@@ -122,7 +122,7 @@ export interface NavigationProps {
 export type RootStackParamList = {
   Welcome: undefined;
   Auth: undefined;
-  CityInput: undefined;
+  CityInput: { returnTo?: 'ModeChoice'; mode?: 'solo' | 'couple' };
   ModeChoice: { city?: string };
   Quiz: { city?: string; isCoupleMode?: boolean; roomId?: string; roomCode?: string; isRoomCreator?: boolean; isRoomMember?: boolean };
   SwipeDate: { quizAnswers: { [key: string]: string }; city?: string; roomId?: string; isCoupleMode?: boolean };

@@ -12,12 +12,14 @@ import {
   FlatList,
   Modal,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../types';
 import { getCitySuggestions, getCurrentLocationCity } from '../utils/data';
 
 type CityInputScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'CityInput'>;
+type CityInputScreenRouteProp = RouteProp<RootStackParamList, 'CityInput'>;
 
 const CityInputScreen: React.FC = () => {
   const [city, setCity] = useState('');
@@ -26,6 +28,8 @@ const CityInputScreen: React.FC = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const navigation = useNavigation<CityInputScreenNavigationProp>();
+  const route = useRoute<CityInputScreenRouteProp>();
+  const { returnTo, mode } = route.params || {};
 
   // Fermer les suggestions quand on appuie en dehors
   useEffect(() => {
@@ -116,8 +120,20 @@ const CityInputScreen: React.FC = () => {
         return;
       }
 
-      // Naviguer vers le quiz avec la ville
-      navigation.navigate('Quiz', { city: city.trim() });
+      // Si on vient du mode solo, aller directement au quiz sans repasser par ModeChoice
+      if (mode === 'solo') {
+        // Mode solo : naviguer directement vers le quiz
+        navigation.navigate('Quiz', { city: city.trim() });
+      } else if (mode === 'couple') {
+        // Mode couple : naviguer vers l'écran Room
+        navigation.navigate('Room', { city: city.trim() });
+      } else if (returnTo === 'ModeChoice') {
+        // Si on doit retourner à ModeChoice (autres cas), naviguer là-bas avec la ville
+        navigation.navigate('ModeChoice', { city: city.trim() });
+      } else {
+        // Comportement par défaut : naviguer vers le quiz
+        navigation.navigate('Quiz', { city: city.trim() });
+      }
     } catch (error) {
       console.error('Error validating city:', error);
       Alert.alert('Erreur', 'Une erreur est survenue lors de la validation de la ville. Veuillez réessayer.');

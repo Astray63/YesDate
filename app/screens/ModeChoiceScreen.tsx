@@ -24,7 +24,16 @@ export default function ModeChoiceScreen({ navigation, route }: ModeChoiceScreen
   const handleSoloMode = () => {
     // Naviguer vers le quiz en mode solo (pas de room)
     global.currentRoomId = null;
-    navigation.navigate('Quiz', { city: userCity });
+    
+    // Si aucune ville n'est définie, demander la localisation d'abord
+    if (!userCity) {
+      navigation.navigate('CityInput', { 
+        returnTo: 'ModeChoice',
+        mode: 'solo'
+      });
+    } else {
+      navigation.navigate('Quiz', { city: userCity });
+    }
   };
 
   const handleCoupleMode = () => {
