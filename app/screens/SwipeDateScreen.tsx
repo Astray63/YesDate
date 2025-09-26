@@ -375,8 +375,7 @@ export default function SwipeDateScreen({ navigation, route }: SwipeDateScreenPr
     return (
       <SafeAreaView style={styles.container}>
         <LoadingSpinner
-          message={loadingMessage}
-          showProgress={true}
+          showProgress={false}
           size="large"
         />
       </SafeAreaView>

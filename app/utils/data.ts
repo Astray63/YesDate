@@ -316,7 +316,7 @@ export type ProgressCallback = (step: string, progress: number) => void;
 export type LoadingSteps =
   | 'analyzing_preferences'
   | 'researching_locations'
-  | 'generating_suggestions'
+  | 'creating_suggestions'
   | 'finalizing_recommendations'
   | 'processing_response'
   | 'fallback_mode';
@@ -368,7 +368,7 @@ export const generateAIDateSuggestions = async (
     const prompt = createAIPrompt(quizAnswers, userLocation);
 
     // Étape 4: Appel à l'API IA
-    onProgress?.('Generating AI suggestions...', 60);
+    onProgress?.('Creating personalized date ideas...', 60);
 
     // Log debug pour tracer le prompt envoyé à l'IA
     console.log('=== DEBUG: Prompt sent to Gemma 3 27B ===');
@@ -477,7 +477,7 @@ FORMAT JSON OBLIGATOIRE - RESPECTE EXACTEMENT :
     }
 
     // Étape 5: Traitement de la réponse
-    onProgress?.('Processing AI response...', 80);
+    onProgress?.('Crafting your perfect suggestions...', 80);
     const data = await response.json();
 
     // Log debug pour la réponse brute de l'IA
@@ -561,7 +561,7 @@ FORMAT JSON OBLIGATOIRE - RESPECTE EXACTEMENT :
     console.error('Error generating AI date suggestions:', error);
 
     // Mode fallback avec progression
-    onProgress?.('Switching to fallback mode...', 50);
+    onProgress?.('Preparing backup suggestions...', 50);
     await new Promise(resolve => setTimeout(resolve, 300)); // Petite pause
 
     // Retourner des suggestions de base en cas d'erreur
@@ -732,7 +732,7 @@ export const getPersonalizedDateIdeas = async (
     const aiSuggestions = await generateAIDateSuggestions(quizAnswers, userLocation || undefined, onProgress);
 
     // Récupérer quelques idées existantes qui correspondent aux préférences
-    onProgress?.('Combining with existing ideas...', 95);
+    onProgress?.('Adding some extra inspiration...', 95);
     const existingIdeas = await getDateIdeas({
       category: quizAnswers.activity_type,
       cost: quizAnswers.budget,

@@ -235,7 +235,7 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
     return (
       <SafeAreaView style={styles.container}>
         <LoadingSpinner
-          message="Chargement des questions du quiz..."
+          quizMode={true}
           showProgress={false}
           size="medium"
         />
@@ -316,7 +316,7 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
     return (
       <SafeAreaView style={styles.container}>
         <LoadingSpinner
-          message="Préparation du quiz..."
+          quizMode={true}
           showProgress={false}
           size="medium"
         />
@@ -329,7 +329,7 @@ export default function QuizScreen({ navigation }: QuizScreenProps) {
     return (
       <SafeAreaView style={styles.container}>
         <LoadingSpinner
-          message="Vérification des réponses..."
+          quizMode={true}
           showProgress={false}
           size="medium"
         />

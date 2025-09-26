@@ -18,23 +18,38 @@ interface LoadingSpinnerProps {
   showProgress?: boolean;
   size?: 'small' | 'medium' | 'large';
   message?: string;
+  quizMode?: boolean;
 }
 
 export default function LoadingSpinner({
-  loadingSteps = [
-    "✨ Analyse de vos préférences romantiques",
-    "💕 Recherche des lieux les plus enchanteurs",
-    "🌟 Création d'expériences sur mesure",
-    "🎭 Personnalisation selon vos goûts",
-    "💎 Sélection des meilleures suggestions",
-    "🎉 Finalisation de votre sélection parfaite",
-    "🌹 Ajout de la touche magique finale"
-  ],
+  loadingSteps,
   currentStep = 0,
-  showProgress = true,
+  showProgress = false,
   size = 'large',
-  message
+  message,
+  quizMode = false
 }: LoadingSpinnerProps) {
+
+  // Default quiz generation phrases
+  const defaultQuizSteps = [
+    "Brainstorming ideas...",
+    "Crafting your perfect date...",
+    "Analyzing preferences...",
+    "Almost ready...",
+    "Finalizing suggestions..."
+  ];
+
+  // Default loading phrases for general use
+  const defaultLoadingSteps = [
+    "Creating personalized date ideas...",
+    "Crafting your perfect suggestions...",
+    "Analyzing preferences...",
+    "Almost ready...",
+    "Finalizing recommendations..."
+  ];
+
+  // Use quiz-specific phrases if quizMode is true, otherwise use provided loadingSteps or fallback
+  const stepsToUse = quizMode ? defaultQuizSteps : (loadingSteps || defaultLoadingSteps);
   
   // États pour les animations
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
@@ -186,7 +201,7 @@ export default function LoadingSpinner({
         useNativeDriver: false,
       }),
     ]).start(() => {
-      setCurrentMessageIndex((prev) => (prev + 1) % loadingSteps.length);
+      setCurrentMessageIndex((prev) => (prev + 1) % stepsToUse.length);
       messageTranslateY.setValue(20);
       
       Animated.parallel([
@@ -210,14 +225,14 @@ export default function LoadingSpinner({
 
   // Gestion du changement de messages
   useEffect(() => {
-    if (loadingSteps.length > 1) {
+    if (stepsToUse.length > 1) {
       const messageInterval = setInterval(() => {
         transitionToNextMessage();
-      }, 2000);
+      }, quizMode ? 3500 : 2000); // 3.5 seconds for quiz mode, 2 seconds for others
 
       return () => clearInterval(messageInterval);
     }
-  }, [loadingSteps.length]);
+  }, [stepsToUse.length, quizMode]);
 
   const getSize = () => {
     switch (size) {
@@ -245,7 +260,7 @@ export default function LoadingSpinner({
     outputRange: [0.3, 0.8],
   });
 
-  const displayMessage = message || loadingSteps[currentMessageIndex] || loadingSteps[0];
+  const displayMessage = message || stepsToUse[currentMessageIndex] || stepsToUse[0];
 
   return (
     <View style={styles.container}>
