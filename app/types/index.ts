@@ -123,11 +123,11 @@ export type RootStackParamList = {
   Welcome: undefined;
   Auth: undefined;
   CityInput: { returnTo?: 'ModeChoice'; mode?: 'solo' | 'couple' };
-  ModeChoice: { city?: string };
-  Quiz: { city?: string; isCoupleMode?: boolean; roomId?: string; roomCode?: string; isRoomCreator?: boolean; isRoomMember?: boolean };
-  SwipeDate: { quizAnswers: { [key: string]: string }; city?: string; roomId?: string; isCoupleMode?: boolean };
+  ModeChoice: { city?: string; coordinates?: { latitude: number; longitude: number } };
+  Quiz: { city?: string; coordinates?: { latitude: number; longitude: number }; isCoupleMode?: boolean; roomId?: string; roomCode?: string; isRoomCreator?: boolean; isRoomMember?: boolean };
+  SwipeDate: { quizAnswers: { [key: string]: string }; city?: string; coordinates?: { latitude: number; longitude: number }; roomId?: string; isCoupleMode?: boolean };
   Match: { matches: any[] };
-  Room: { roomId?: string; city?: string };
+  Room: { roomId?: string; city?: string; coordinates?: { latitude: number; longitude: number } };
   MainTab: undefined;
   Community: undefined;
   Profile: undefined;

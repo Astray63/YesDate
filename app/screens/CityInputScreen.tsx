@@ -10,13 +10,20 @@ import {
   TouchableWithoutFeedback,
   Alert,
   FlatList,
-  Modal,
+  Dimensions,
+  Animated,
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../types';
 import { getCitySuggestions, getCurrentLocationCity } from '../utils/data';
+import { theme } from '../utils/theme';
+import AppleMapView from '../components/AppleMapView';
 
 type CityInputScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'CityInput'>;
 type CityInputScreenRouteProp = RouteProp<RootStackParamList, 'CityInput'>;
@@ -27,9 +34,24 @@ const CityInputScreen: React.FC = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    name: string;
+    address: string;
+    coordinates: { latitude: number; longitude: number };
+    city?: string;
+  } | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [mapVisible, setMapVisible] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const navigation = useNavigation<CityInputScreenNavigationProp>();
   const route = useRoute<CityInputScreenRouteProp>();
   const { returnTo, mode } = route.params || {};
+
+  // Animations
+  const fadeAnim = new Animated.Value(0);
+  const slideAnim = new Animated.Value(50);
+  const inputScaleAnim = new Animated.Value(1);
+  const buttonScaleAnim = new Animated.Value(1);
 
   // Fermer les suggestions quand on appuie en dehors
   useEffect(() => {
@@ -42,6 +64,37 @@ const CityInputScreen: React.FC = () => {
       return () => clearTimeout(timeoutId);
     }
   }, [showSuggestions]);
+
+  // Animation d'entrée
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      })
+    ]).start();
+
+    const requestLocationOnLoad = async () => {
+      try {
+        const { getCurrentLocationCity } = await import('../utils/data');
+        const currentCity = await getCurrentLocationCity();
+        if (currentCity) {
+          setCity(currentCity);
+        }
+      } catch (error) {
+        console.log('Geolocation not available or denied');
+      }
+    };
+
+    const timeoutId = setTimeout(requestLocationOnLoad, 1000);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   // Fonction pour demander la géolocalisation
   const requestLocationPermission = async () => {
@@ -95,11 +148,67 @@ const CityInputScreen: React.FC = () => {
     }
   };
 
+  // Gestion du focus de l'input
+  const handleInputFocus = () => {
+    setInputFocused(true);
+    Animated.spring(inputScaleAnim, {
+      toValue: 1.02,
+      useNativeDriver: true,
+    }).start();
+
+    if (city.length >= 2) {
+      const citySuggestions = getCitySuggestions(city);
+      setSuggestions(citySuggestions);
+      setShowSuggestions(citySuggestions.length > 0);
+    }
+  };
+
+  const handleInputBlur = () => {
+    setInputFocused(false);
+    Animated.spring(inputScaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // Animation du bouton
+  const animateButton = () => {
+    Animated.sequence([
+      Animated.spring(buttonScaleAnim, {
+        toValue: 0.95,
+        useNativeDriver: true,
+        speed: 20,
+      }),
+      Animated.spring(buttonScaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 20,
+      })
+    ]).start();
+  };
+
   // Fonction pour sélectionner une suggestion
   const selectSuggestion = (selectedCity: string) => {
     setCity(selectedCity);
     setShowSuggestions(false);
     Keyboard.dismiss();
+  };
+
+  // Fonction pour gérer la sélection de localisation depuis la carte
+  const handleLocationSelect = (location: {
+    name: string;
+    address: string;
+    coordinates: { latitude: number; longitude: number };
+    city?: string;
+  }) => {
+    setSelectedLocation(location);
+    setCity(location.city || location.name);
+    setShowMap(false);
+    Alert.alert(
+      'Localisation sélectionnée',
+      `Vous avez sélectionné : ${location.name}. ${location.city ? `Ville : ${location.city}` : ''}`,
+      [{ text: 'OK' }]
+    );
   };
 
   const handleContinue = async () => {
@@ -108,31 +217,53 @@ const CityInputScreen: React.FC = () => {
       return;
     }
 
+    animateButton();
     setLoading(true);
-    
+
     try {
-      // Valider que la ville existe en obtenant ses coordonnées
-      const { getCityCoordinates } = require('../utils/data');
-      const coordinates = await getCityCoordinates(city.trim());
-      
-      if (!coordinates) {
-        Alert.alert('Ville introuvable', 'Cette ville n\'a pas été trouvée. Veuillez vérifier l\'orthographe et réessayer.');
-        return;
+      let coordinates = null;
+      let validatedCity = city.trim();
+
+      // Si on a une localisation sélectionnée depuis la carte, utiliser ses coordonnées
+      if (selectedLocation) {
+        coordinates = selectedLocation.coordinates;
+        validatedCity = selectedLocation.city || selectedLocation.name;
+      } else {
+        // Sinon, valider que la ville existe en obtenant ses coordonnées
+        const { getCityCoordinates } = require('../utils/data');
+        coordinates = await getCityCoordinates(city.trim());
+
+        if (!coordinates) {
+          Alert.alert('Ville introuvable', 'Cette ville n\'a pas été trouvée. Veuillez vérifier l\'orthographe et réessayer.');
+          return;
+        }
       }
 
       // Si on vient du mode solo, aller directement au quiz sans repasser par ModeChoice
       if (mode === 'solo') {
         // Mode solo : naviguer directement vers le quiz
-        navigation.navigate('Quiz', { city: city.trim() });
+        navigation.navigate('Quiz', {
+          city: validatedCity,
+          coordinates: coordinates
+        });
       } else if (mode === 'couple') {
         // Mode couple : naviguer vers l'écran Room
-        navigation.navigate('Room', { city: city.trim() });
+        navigation.navigate('Room', {
+          city: validatedCity,
+          coordinates: coordinates
+        });
       } else if (returnTo === 'ModeChoice') {
         // Si on doit retourner à ModeChoice (autres cas), naviguer là-bas avec la ville
-        navigation.navigate('ModeChoice', { city: city.trim() });
+        navigation.navigate('ModeChoice', {
+          city: validatedCity,
+          coordinates: coordinates
+        });
       } else {
         // Comportement par défaut : naviguer vers le quiz
-        navigation.navigate('Quiz', { city: city.trim() });
+        navigation.navigate('Quiz', {
+          city: validatedCity,
+          coordinates: coordinates
+        });
       }
     } catch (error) {
       console.error('Error validating city:', error);
@@ -143,210 +274,229 @@ const CityInputScreen: React.FC = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Bienvenue sur YesDate !</Text>
-          <Text style={styles.subtitle}>
-            Pour vous proposer les meilleures dates près de chez vous,{'\n'}
-            dites-nous dans quelle ville vous vous trouvez.
-          </Text>
-          
-          <View style={styles.inputContainer}>
-            <View style={styles.labelContainer}>
-              <Text style={styles.label}>Votre ville</Text>
-              <TouchableOpacity
-                style={styles.locationButton}
-                onPress={requestLocationPermission}
-                disabled={locationLoading}
-              >
-                {locationLoading ? (
-                  <ActivityIndicator size="small" color="#E91E63" />
-                ) : (
-                  <Text style={styles.locationButtonText}>📍 Détecter automatiquement</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-            <TextInput
-              style={styles.input}
-              value={city}
-              onChangeText={handleCityChange}
-              placeholder="Ex: Paris, Lyon, Marseille..."
-              placeholderTextColor="#999"
-              autoCapitalize="words"
-              autoCorrect={false}
-              returnKeyType="done"
-              onSubmitEditing={handleContinue}
-              onFocus={() => {
-                if (city.length >= 2) {
-                  const citySuggestions = getCitySuggestions(city);
-                  setSuggestions(citySuggestions);
-                  setShowSuggestions(citySuggestions.length > 0);
-                }
-              }}
-            />
-
-            {/* Liste d'autocomplétion */}
-            {showSuggestions && suggestions.length > 0 && (
-              <View style={styles.suggestionsContainer}>
-                <FlatList
-                  data={suggestions}
-                  keyExtractor={(item, index) => `${item}-${index}`}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.suggestionItem}
-                      onPress={() => selectSuggestion(item)}
-                    >
-                      <Text style={styles.suggestionText}>{item}</Text>
-                    </TouchableOpacity>
-                  )}
-                  style={styles.suggestionsList}
-                  showsVerticalScrollIndicator={false}
-                />
-              </View>
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleContinue}
-            disabled={loading}
+    <LinearGradient
+      colors={['#ff6b9d', '#ffc0cb', '#ffffff']}
+      locations={[0, 0.3, 1]}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.buttonText}>Continuer</Text>
-            )}
-          </TouchableOpacity>
+            {/* Header moderne avec icône */}
+            <View style={styles.header}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="chevron-back" size={Math.min(20, Dimensions.get('window').width * 0.045)} color={theme.colors.textLight} />
+              </TouchableOpacity>
 
-          <Text style={styles.infoText}>
-            Nous utiliserons votre ville pour vous trouver des dates à proximité.
-          </Text>
-        </View>
-      </View>
-    </TouchableWithoutFeedback>
+              <View style={styles.headerContent}>
+                <View style={styles.titleContainer}>
+                  <Ionicons name="location" size={32} color={theme.colors.primary} style={styles.locationIcon} />
+                  <Text style={styles.title}>Où êtes-vous ?</Text>
+                </View>
+                <Text style={styles.subtitle}>
+                  Trouvez l'amour près de chez vous ✨
+                </Text>
+              </View>
+            </View>
+
+            {/* Section carte principale */}
+            <View style={styles.mainContent}>
+              <View style={styles.mapSection}>
+                <View style={styles.mapContainer}>
+                  <AppleMapView
+                    selectedCity={city}
+                    onLocationSelect={handleLocationSelect}
+                    style={styles.mapView}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* Section du bas avec style Tinder - maintenant fixe en bas */}
+            <View style={styles.bottomSection}>
+              <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
+                <TouchableOpacity
+                  style={[styles.continueButton, loading && styles.buttonDisabled]}
+                  onPress={handleContinue}
+                  disabled={loading}
+                  activeOpacity={0.9}
+                >
+                  <LinearGradient
+                    colors={loading ? ['#cccccc', '#aaaaaa'] : [theme.colors.primary, '#ff8fab']}
+                    style={styles.buttonGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <Text style={styles.continueButtonText}>Continuer</Text>
+                        <Ionicons name="arrow-forward" size={Math.min(20, Dimensions.get('window').width * 0.05)} color="#fff" style={styles.buttonIcon} />
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </Animated.View>
+
+              <Text style={styles.infoText}>
+                💕 Sélectionnez votre zone et continuez
+              </Text>
+            </View>
+          </Animated.View>
+        </TouchableWithoutFeedback>
+      </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   content: {
     flex: 1,
-    padding: 24,
+    paddingHorizontal: Math.max(theme.spacing.md, Dimensions.get('window').width * 0.04),
+  },
+  header: {
+    paddingVertical: Math.max(theme.spacing.md, Dimensions.get('window').height * 0.025),
+    alignItems: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: theme.spacing.sm,
+    top: Math.max(theme.spacing.md, Dimensions.get('window').height * 0.02),
+    width: Math.min(40, Dimensions.get('window').width * 0.09),
+    height: Math.min(40, Dimensions.get('window').width * 0.09),
+    alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: Math.min(20, Dimensions.get('window').width * 0.045),
+    zIndex: 1,
+    ...theme.shadows.lg,
+  },
+  headerContent: {
+    alignItems: 'center',
+    paddingHorizontal: Math.max(60, Dimensions.get('window').width * 0.15),
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  locationIcon: {
+    marginRight: theme.spacing.sm,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#E91E63',
+    fontSize: Math.min(theme.fonts.sizes['4xl'], Dimensions.get('window').width * 0.08),
+    fontWeight: '800' as any,
+    color: theme.colors.textLight,
     textAlign: 'center',
-    marginBottom: 16,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: Math.min(theme.fonts.sizes.lg, Dimensions.get('window').width * 0.04),
+    color: theme.colors.textLight,
     textAlign: 'center',
-    marginBottom: 48,
     lineHeight: 24,
+    fontWeight: '500' as any,
   },
-  inputContainer: {
-    marginBottom: 32,
+  mainContent: {
+    flex: 1,
+    paddingBottom: theme.spacing.lg,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+  mapSection: {
+    height: Dimensions.get('window').width < 380
+      ? Math.min(Dimensions.get('window').height * 0.35, 300) // Smaller screens
+      : Math.min(Dimensions.get('window').height * 0.4, 400), // Normal screens
+    marginTop: theme.spacing.lg,
+    marginHorizontal: -theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
   },
-  input: {
-    borderWidth: 2,
-    borderColor: '#E1E1E1',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    backgroundColor: '#FAFAFA',
-    color: '#333',
-  },
-  button: {
-    backgroundColor: '#E91E63',
-    borderRadius: 12,
-    padding: 18,
-    alignItems: 'center',
-    marginBottom: 24,
-    elevation: 2,
+  mapContainer: {
+    flex: 1,
+    borderRadius: Math.min(16, Dimensions.get('window').width * 0.04),
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 157, 0.1)',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  mapView: {
+    flex: 1,
+    borderRadius: Math.min(12, Dimensions.get('window').width * 0.03),
+  },
+  bottomSection: {
+    paddingTop: Math.max(theme.spacing.md, Dimensions.get('window').height * 0.02),
+    paddingBottom: Math.max(theme.spacing.xl, Dimensions.get('window').height * 0.04),
+    gap: Math.max(theme.spacing.md, Dimensions.get('window').height * 0.015),
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderTopLeftRadius: Math.min(theme.borderRadius.xl, Dimensions.get('window').width * 0.05),
+    borderTopRightRadius: Math.min(theme.borderRadius.xl, Dimensions.get('window').width * 0.05),
+    marginHorizontal: -theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  continueButton: {
+    borderRadius: theme.borderRadius.full,
+    ...theme.shadows.lg,
+    elevation: 8,
+    width: Math.min(Dimensions.get('window').width - (theme.spacing.lg * 2), 350),
+    alignSelf: 'center',
+  },
+  buttonGradient: {
+    paddingVertical: Math.max(theme.spacing.lg, Dimensions.get('window').height * 0.02),
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    minHeight: 56,
   },
   buttonDisabled: {
-    backgroundColor: '#F0F0F0',
-    elevation: 0,
-    shadowOpacity: 0,
+    opacity: 0.6,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+  continueButtonText: {
+    color: '#ffffff',
+    fontSize: Math.min(theme.fonts.sizes.xl, Dimensions.get('window').width * 0.045),
+    fontWeight: '700' as any,
+    marginRight: theme.spacing.sm,
+  },
+  buttonIcon: {
+    marginLeft: theme.spacing.xs,
   },
   infoText: {
-    fontSize: 14,
-    color: '#999',
+    fontSize: Math.min(theme.fonts.sizes.md, Dimensions.get('window').width * 0.035),
+    color: theme.colors.textLight,
     textAlign: 'center',
-    lineHeight: 20,
-  },
-  labelContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  locationButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
-    backgroundColor: '#F0F0F0',
-  },
-  locationButtonText: {
-    fontSize: 12,
-    color: '#E91E63',
-    fontWeight: '500',
-  },
-  suggestionsContainer: {
-    position: 'absolute',
-    top: 100,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    maxHeight: 200,
-    zIndex: 1000,
-  },
-  suggestionsList: {
-    maxHeight: 200,
-  },
-  suggestionItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  suggestionText: {
-    fontSize: 16,
-    color: '#333',
+    lineHeight: 22,
+    paddingHorizontal: Math.max(theme.spacing.lg, Dimensions.get('window').width * 0.04),
+    fontWeight: '500' as any,
+    opacity: 0.8,
   },
 });
 
