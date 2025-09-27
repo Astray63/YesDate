@@ -42,6 +42,33 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     nextLevelExp: 100
   });
 
+  // Fonction pour calculer le nom du niveau basé sur le niveau numérique
+  const getLevelName = (level: number): string => {
+    if (level <= 2) return 'Débutant';
+    if (level <= 5) return 'Explorateur';
+    if (level <= 10) return 'Aventurier';
+    if (level <= 20) return 'Expert';
+    if (level <= 35) return 'Maître';
+    return 'Légende';
+  };
+
+  // Fonction pour générer une description personnalisée basée sur les vraies données
+  const getUserDescription = (): string => {
+    const { totalDates, completedDates, level } = userStats;
+    const levelName = getLevelName(level);
+
+    if (totalDates === 0) {
+      return 'Prêt à découvrir de nouvelles expériences';
+    }
+
+    if (completedDates === 0) {
+      return `${totalDates} date${totalDates > 1 ? 's' : ''} planifiée${totalDates > 1 ? 's' : ''} • ${levelName}`;
+    }
+
+    const completionRate = Math.round((completedDates / totalDates) * 100);
+    return `${completedDates}/${totalDates} dates réalisées (${completionRate}%) • ${levelName}`;
+  };
+
   useEffect(() => {
     loadProfileData();
     requestPermissions();
@@ -67,16 +94,16 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     try {
       setLoading(true);
 
-      // Charger le profil utilisateur
+      // Charger le profil utilisateur avec gestion d'erreur améliorée
       const currentUser = await authService.getCurrentUserWithProfile();
       if (currentUser) {
-        // Récupérer l'avatar depuis AsyncStorage
+        // Récupérer l'avatar depuis AsyncStorage avec fallback
         let avatarUrl = null;
         try {
           const userKey = `avatar_${currentUser.user?.id}`;
           avatarUrl = await AsyncStorage.getItem(userKey);
         } catch (error) {
-          console.log('Aucun avatar sauvegardé localement');
+          console.log('Aucun avatar sauvegardé localement, utilisation de l\'avatar par défaut');
         }
 
         const profileWithAvatar = {
@@ -85,11 +112,82 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         };
         setUserProfile(profileWithAvatar);
         setEditingProfile(profileWithAvatar);
+      } else {
+        console.warn('Aucun utilisateur connecté trouvé');
+        return;
       }
 
-      // Charger les succès
-      const achievementsData = await getAchievements();
-      setAchievements(achievementsData);
+      // Charger les dates utilisateur avec gestion d'erreur
+      let userDatesData: any[] = [];
+      let userStatsData: any = null;
+
+      try {
+        const user = await authService.getCurrentUser();
+        if (user) {
+          [userDatesData, userStatsData] = await Promise.allSettled([
+            authService.getUserDateTodos(user.id) || [],
+            authService.getUserStats(user.id)
+          ]).then(results => [
+            results[0].status === 'fulfilled' ? results[0].value : [],
+            results[1].status === 'fulfilled' ? results[1].value : null
+          ]);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des données utilisateur:', error);
+        // Garder les valeurs par défaut
+      }
+
+      setUserDates(userDatesData);
+
+      // Charger les succès avec gestion d'erreur améliorée
+      let achievementsData: any[] = [];
+      try {
+        achievementsData = await getAchievements(currentUser?.user?.id);
+      } catch (error) {
+        console.error('Erreur lors du chargement des succès:', error);
+        // Les données mock seront utilisées comme fallback dans getAchievements
+      }
+
+      // Calculer la progression des succès basée sur les vraies données utilisateur
+      const achievementsWithProgress = achievementsData.map((achievement: any) => {
+        let progress = 0;
+        let maxProgress = achievement.max_progress || 100;
+
+        try {
+          // Calculer la progression basée sur le type de succès
+          switch (achievement.category) {
+            case 'dates':
+              // Succès basé sur le nombre total de dates
+              progress = Math.min(userDatesData?.length || 0, maxProgress);
+              break;
+            case 'exploration':
+              // Succès basé sur le nombre de swipes (utiliser les vraies données)
+              progress = Math.min(userStatsData?.total_swipes || 0, maxProgress);
+              break;
+            case 'matches':
+              // Succès basé sur les matchs (à implémenter quand les vraies données de matchs seront disponibles)
+              progress = 0;
+              break;
+            case 'completion':
+              // Succès basé sur les dates terminées
+              progress = Math.min(userStatsData?.completed_todos || 0, maxProgress);
+              break;
+            default:
+              progress = achievement.progress || 0;
+          }
+        } catch (error) {
+          console.error('Erreur lors du calcul de la progression des succès:', error);
+          progress = achievement.progress || 0;
+        }
+
+        return {
+          ...achievement,
+          progress: Math.min(progress, maxProgress),
+          max_progress: maxProgress
+        };
+      });
+
+      setAchievements(achievementsWithProgress);
 
       // Charger les dates de l'utilisateur
       try {
@@ -98,18 +196,39 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           const userDatesData = await authService.getUserDateTodos(user.id);
           setUserDates(userDatesData || []);
 
-          // Calculer les statistiques
+          // Récupérer les vraies statistiques utilisateur avec gestion d'erreur
+          let userStatsData: any = null;
+          try {
+            userStatsData = await authService.getUserStats(user.id);
+          } catch (error) {
+            console.error('Erreur lors du chargement des statistiques utilisateur:', error);
+          }
+
+          // Calculer les statistiques à partir des vraies données avec fallbacks
           const completedDates = userDatesData?.filter((date: any) => date.status === 'completed').length || 0;
           const totalDates = userDatesData?.length || 0;
+
+          // Utiliser les vraies données de statistiques avec fallbacks
+          const realStats = {
+            totalSwipes: userStatsData?.total_swipes || 0,
+            rightSwipes: userStatsData?.right_swipes || 0,
+            completedTodos: userStatsData?.completed_todos || 0,
+            matches: 0, // À calculer depuis les vraies données de matchs si disponible
+            points: (userStatsData?.completed_todos || 0) * 10 + achievementsData.length * 5,
+            experience: (userStatsData?.completed_todos || 0) * 10 + achievementsData.length * 5,
+            level: Math.floor(((userStatsData?.completed_todos || 0) * 10 + achievementsData.length * 5) / 100) + 1,
+            nextLevelExp: ((Math.floor(((userStatsData?.completed_todos || 0) * 10 + achievementsData.length * 5) / 100) + 1) * 100)
+          };
 
           setUserStats(prev => ({
             ...prev,
             totalDates,
             completedDates,
-            points: completedDates * 10 + achievementsData.length * 5,
-            experience: completedDates * 10 + achievementsData.length * 5,
-            level: Math.floor((completedDates * 10 + achievementsData.length * 5) / 100) + 1,
-            nextLevelExp: ((Math.floor((completedDates * 10 + achievementsData.length * 5) / 100) + 1) * 100)
+            matches: realStats.matches,
+            points: realStats.points,
+            experience: realStats.experience,
+            level: realStats.level,
+            nextLevelExp: realStats.nextLevelExp
           }));
         }
       } catch (error) {
@@ -343,9 +462,9 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             <Text style={styles.userEmail}>
               {userProfile?.email || 'email@exemple.com'}
             </Text>
-            <Text style={styles.userLevel}>Niveau Débutant</Text>
+            <Text style={styles.userLevel}>{getLevelName(userStats.level)}</Text>
             <Text style={styles.userDescription}>
-              Membre depuis {new Date().getFullYear()}
+              {getUserDescription()}
             </Text>
           </View>
         </View>
